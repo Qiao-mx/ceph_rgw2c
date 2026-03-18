@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_cstack.dir/tests/test_cstack.c.o -o test_cstack  librgw_c_common.a 

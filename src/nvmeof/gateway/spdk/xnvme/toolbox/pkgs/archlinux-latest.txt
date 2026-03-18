@@ -1,0 +1,14 @@
+base-devel
+cunit
+git
+libaio
+liburing
+libutil-linux
+meson
+nasm
+ncurses
+ninja
+numactl
+python-pip
+python-pyelftools
+python3

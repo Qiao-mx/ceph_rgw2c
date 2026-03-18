@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_hex.dir/tests/test_hex.c.o -o test_hex  librgw_c_common.a 

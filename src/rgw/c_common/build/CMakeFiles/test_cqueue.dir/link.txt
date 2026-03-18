@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_cqueue.dir/tests/test_cqueue.c.o -o test_cqueue  librgw_c_common.a 

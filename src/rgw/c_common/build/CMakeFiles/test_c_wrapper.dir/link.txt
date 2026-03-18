@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/test_c_wrapper.dir/examples/test_c_wrapper.cpp.o -o test_c_wrapper  -lpthread 

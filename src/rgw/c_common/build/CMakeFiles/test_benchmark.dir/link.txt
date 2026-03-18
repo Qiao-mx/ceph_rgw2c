@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_benchmark.dir/tests/test_benchmark.c.o -o test_benchmark  librgw_c_common.a 

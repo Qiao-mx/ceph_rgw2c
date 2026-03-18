@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -name \"*.h\" -type f | xargs grep -l \"class.*:\" | head -20)",
+      "Bash(find . -type f -name \"*.cc\" -o -name \"*.cpp\" | xargs wc -l | tail -1)",
+      "Bash(find . -type f -name \"*.h\" -o -name \"*.hpp\" | xargs wc -l | tail -1)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

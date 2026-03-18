@@ -1,0 +1,85 @@
+# RGW C 开发规范
+
+## 重要提示
+
+### 必须阅读的文档
+
+在编写任何代码之前，**必须**完整阅读以下文档：
+
+1. **`memory-bank/@architecture.md`** - 包含完整的数据库结构和架构设计
+2. **`memory-bank/@cpp2c-document.md`** - C++ 转 C 的转换规范和指南
+3. **`memory-bank/@implementation-plan.md`** - 实施计划
+
+### 不要重复造轮子
+
+- 如有需要，**必须**优先使用 `c_common` 文件夹下已经转换成 C 库的数据结构
+- 现有的 C 封装包括：
+  - `rgw_carray` - 动态数组 (std::vector)
+  - `rgw_cstring` - 字符串 (std::string)
+  - `rgw_cmap` - 有序 Map (std::map)
+  - `rgw_cset` - 有序 Set (std::set)
+  - `rgw_clist` - 双向链表 (std::list)
+  - `rgw_cdeque` - 双端队列 (std::deque)
+  - `rgw_cstack` - 栈 (std::stack)
+  - `rgw_cqueue` - 队列 (std::queue)
+  - `rgw_cpriority_queue` - 优先队列 (std::priority\_queue)
+  - `rgw_chash_map` - 哈希表 (std::unordered\_map)
+  - `rgw_coptional` - 可选类型 (std::optional)
+  - `rgw_oop` - OOP 框架 (虚函数表、引用计数、智能指针)
+  - `rgw_errors` - 错误处理框架
+  - `rgw_ccommon` - 统一头文件 (包含所有容器)
+
+### 文档更新要求
+
+#### 1. architecture.md 更新
+
+每完成一个文件的修改后，**必须**更新 `memory-bank/@architecture.md`，记录：
+
+- 新增的模块/组件
+- 数据结构的变化
+- API 的变更
+- 重要的设计决策
+
+#### 2. progress.md 更新 (必须执行)
+
+**每完成一个任务后，必须立即更新** **`memory-bank/@progress.md`**：
+
+1. 在"完成的任务"表格中添加新行：
+   ```
+   | 日期 | 任务 | 状态 |
+   |---|---|---|
+   | YYYY-MM-DD | 任务名称 | ✅ 完成 |
+   ```
+2. 如果有新的待办任务，在"待完成的任务"表格中添加：
+   ```
+   | 日期 | 任务 | 状态 |
+   |---|---|---|
+   | - | 任务名称 | 🔄 待开始 |
+   ```
+
+#### 3. 待办事项管理
+
+**使用 TodoWrite 工具跟踪任务进度**：
+
+1. 开始任务前：创建 TODO 列表
+2. 任务进行中：更新状态为 `in_progress`
+3. 任务完成后：
+   - 更新状态为 `completed`
+   - 更新 progress.md
+   - 更新 architecture.md（如需要）
+   - 运行测试确保没有引入回归
+
+### 编译和测试要求
+
+- 每次代码修改后，**必须**运行编译和测试：
+  ```bash
+  cd build && cmake .. && make -j4
+  ctest --output-on-failure
+  ```
+- 确保所有测试通过后再结束任务
+- 使用 `ReadLints` 检查代码质量
+- 编译或测试期间出现的问题必须总结到coding-checklist.md中
+
+## 代码转换要求
+
+每次将C++代码转换成C代码时，需要确保转换前后实现的功能不能减少，需要完全适配原代码的功能结构

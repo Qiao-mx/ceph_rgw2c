@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_cmap.dir/tests/test_cmap.c.o -o test_cmap  librgw_c_common.a 
