@@ -29,12 +29,9 @@ typedef struct rados_user_impl {
     uint32_t user_type;
     int32_t max_buckets;
     rgw_sal_attrs_t* attrs;
-    rgw_sal_quota_info_t quota_info;      /**< 配额信息 (P0: 直接实现) */
-    rgw_sal_user_caps_t user_caps;        /**< 用户权限 (P0: 直接实现) */
-    rgw_sal_obj_version_tracker_t version_tracker; /**< 版本跟踪器 (P0: 直接实现) */
-    /* 模块 A: User 统计功能 */
-    rgw_sal_usage_info_t usage;          /**< 使用统计缓存 */
-    bool usage_loaded;                     /**< 使用统计是否已加载 */
+    void* quota_info;             /**< 配额信息 */
+    void* user_caps;              /**< 用户权限 */
+    void* version_tracker;        /**< 版本跟踪器 */
     bool loaded;
 } rados_user_impl_t;
 
@@ -50,7 +47,6 @@ typedef struct rados_bucket_impl {
     rgw_sal_attrs_t* attrs;
     void* acl;              /**< ACL 策略指针 */
     void* policy;           /**< IAM 策略指针 */
-    char* tag;              /**< 桶标签 (P0: 直接实现) */
     bool loaded;
     bool created;        /**< 是否已创建 */
     bool deleted;        /**< 是否已删除 */
@@ -72,8 +68,6 @@ typedef struct rados_object_impl {
     bool written;           /**< 是否已写入 */
     bool deleted;           /**< 是否已删除 */
     bool loaded;            /**< 是否已加载状态 */
-    bool is_atomic;         /**< 是否原子操作 (P0: 直接实现) */
-    bool is_expired;        /**< 是否已过期 (P0: 直接实现) */
 } rados_object_impl_t;
 
 /**
@@ -481,20 +475,7 @@ static int rados_user_merge_and_store_attrs(rgw_sal_user_t* user, rgw_sal_attrs_
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    /* 获取当前属性，如果不存在则创建 */
-    if (!impl->attrs) {
-        impl->attrs = rgw_sal_attrs_create();
-        if (!impl->attrs) return RGW_SAL_ERR_OUT_OF_MEMORY;
-    }
-
-    /* 合并新属性到当前属性 (P0: 完整实现) */
-    for (size_t i = 0; i < new_attrs->count; i++) {
-        const rgw_sal_attr_pair_t* pair = &new_attrs->pairs[i];
-        int ret = rgw_sal_attrs_set(impl->attrs, pair->key, pair->value, pair->value_len);
-        if (ret != RGW_SAL_OK) return ret;
-    }
-
-    /* TODO: 实际调用 store() 持久化到 RADOS */
+    /* TODO: 实际合并并存储用户属性 */
 
     (void)dpp;
     (void)y;
@@ -532,17 +513,15 @@ static void rados_user_clear_ns(rgw_sal_user_t* user) {
     }
 }
 
-/* 配额信息 (P0: 完整实现) */
+/* 配额信息 */
 static int rados_user_set_info(rgw_sal_user_t* user, void* info) {
     if (!user) return RGW_SAL_ERR_INVALID_ARG;
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    if (info) {
-        /* 复制配额信息 */
-        memcpy(&impl->quota_info, info, sizeof(rgw_sal_quota_info_t));
-    }
-    return RGW_SAL_OK;
+    /* TODO: 复制配额信息到 impl */
+    (void)info;
+    return RGW_SAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int rados_user_get_info(rgw_sal_user_t* user, void** info) {
@@ -550,18 +529,20 @@ static int rados_user_get_info(rgw_sal_user_t* user, void** info) {
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    *info = &impl->quota_info;
-    return RGW_SAL_OK;
+    /* TODO: 获取配额信息 */
+    *info = NULL;
+    return RGW_SAL_ERR_NOT_IMPLEMENTED;
 }
 
-/* 权限管理 (P0: 完整实现) */
+/* 权限管理 */
 static int rados_user_get_caps(rgw_sal_user_t* user, void** caps) {
     if (!user || !caps) return RGW_SAL_ERR_INVALID_ARG;
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    *caps = &impl->user_caps;
-    return RGW_SAL_OK;
+    /* TODO: 获取用户权限 */
+    *caps = NULL;
+    return RGW_SAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int rados_user_get_version_tracker(rgw_sal_user_t* user, void** tracker) {
@@ -569,121 +550,33 @@ static int rados_user_get_version_tracker(rgw_sal_user_t* user, void** tracker) 
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    *tracker = &impl->version_tracker;
-    return RGW_SAL_OK;
+    /* TODO: 获取版本跟踪器 */
+    *tracker = NULL;
+    return RGW_SAL_ERR_NOT_IMPLEMENTED;
 }
 
-/* 使用统计 - 完整实现 */
+/* 使用统计 */
 static int rados_user_read_usage(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
                                   uint64_t start_epoch, uint64_t end_epoch,
                                   uint32_t max_entries, void* usage) {
     if (!user) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
-    if (!impl) return RGW_SAL_ERR_INVALID_ARG;
-
-    /*
-     * 完整实现需要:
-     * 1. 获取 RADOS IO 上下文 (从 driver 或 pool 获取)
-     * 2. 使用 rgw_usage_read_omap 读取 usage 数据
-     * 3. 将结果聚合到 usage 参数中
-     *
-     * 由于当前驱动实现中 rados_handle 是占位符，
-     * 完整实现需要与 Ceph 的 librados 集成。
-     *
-     * 简化实现示例:
-     * - 从 RADOS 池读取 usage OMAP 数据
-     * - 遍历分片聚合结果
-     */
-
-    /* 获取驱动和 RADOS 句柄 */
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
-    if (!driver_impl || !driver_impl->rados_handle) {
-        /* RADOS 未初始化，返回缓存数据 */
-        if (usage) {
-            /* 填充缓存的 usage 数据 */
-        }
-        return RGW_SAL_OK;
-    }
-
-    /* 创建迭代器 */
-    rgw_usage_iter_t* iter = rgw_usage_iter_create();
-    if (!iter) return RGW_SAL_ERR_OUT_OF_MEMORY;
-
-    /* 创建结果集合 */
-    rgw_usage_entries_t* entries = rgw_usage_entries_create();
-    if (!entries) {
-        rgw_usage_iter_destroy(iter);
-        return RGW_SAL_ERR_OUT_OF_MEMORY;
-    }
-
-    /* 读取 usage 数据
-     * 实际实现需要获取正确的 IO 上下文和池
-     * 这里使用占位符参数
-     */
-    bool is_truncated = false;
-
-    /* 调用 RADOS Usage 读取函数
-     * 需要 librados_ioctx_t 和池名称
-     * 以下是占位实现
-     */
     (void)dpp;
     (void)start_epoch;
     (void)end_epoch;
     (void)max_entries;
     (void)usage;
-
-    /* 释放资源 */
-    rgw_usage_entries_destroy(entries);
-    rgw_usage_iter_destroy(iter);
-
-    /* TODO: 完整实现需要:
-     * 1. 调用 rados_ioctx_create 或获取现有上下文
-     * 2. 使用 rgw_usage_read_omap 读取数据
-     * 3. 将结果复制到 usage 参数
-     */
-
-    return RGW_SAL_OK;
+    return RGW_SAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int rados_user_trim_usage(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
                                    uint64_t start_epoch, uint64_t end_epoch) {
     if (!user) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
-    if (!impl) return RGW_SAL_ERR_INVALID_ARG;
-
-    /*
-     * 完整实现需要:
-     * 1. 获取 RADOS IO 上下文
-     * 2. 使用 rgw_usage_trim_omap 删除指定时间范围的 usage 数据
-     *
-     * 由于当前驱动实现中 rados_handle 是占位符，
-     * 完整实现需要与 Ceph 的 librados 集成。
-     */
-
-    /* 获取用户 ID */
-    const char* user_id = impl->id;
-    if (!user_id) user_id = "";
-
-    /* 获取驱动和 RADOS 句柄 */
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
-    if (!driver_impl || !driver_impl->rados_handle) {
-        /* RADOS 未初始化，无法执行 */
-        return RGW_SAL_ERR_NOT_INITIALIZED;
-    }
-
-    /*
-     * TODO: 完整实现需要:
-     * 1. 调用 rados_ioctx_create 或获取现有上下文
-     * 2. 使用 rgw_usage_trim_omap 删除数据
-     */
-
     (void)dpp;
     (void)start_epoch;
     (void)end_epoch;
-
-    return RGW_SAL_OK;
+    return RGW_SAL_ERR_NOT_IMPLEMENTED;
 }
 
 /* MFA 认证 */
@@ -1124,41 +1017,6 @@ static int rados_bucket_sync(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
     return RGW_SAL_OK;
 }
 
-/* 标签操作 (P0: 完整实现) */
-static int rados_bucket_get_tag(rgw_sal_bucket_t* bucket, char** tag) {
-    if (!bucket || !tag) return RGW_SAL_ERR_INVALID_ARG;
-
-    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
-    if (!impl) return RGW_SAL_ERR_INVALID_ARG;
-
-    /* 从 tag 字段获取标签 */
-    if (impl->tag) {
-        *tag = strdup(impl->tag);
-        if (!*tag) return RGW_SAL_ERR_OUT_OF_MEMORY;
-    } else {
-        *tag = NULL;
-    }
-    return RGW_SAL_OK;
-}
-
-static int rados_bucket_set_tag(rgw_sal_bucket_t* bucket, const char* tag,
-                                  const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y) {
-    if (!bucket) return RGW_SAL_ERR_INVALID_ARG;
-
-    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
-    if (!impl) return RGW_SAL_ERR_INVALID_ARG;
-
-    free(impl->tag);
-    impl->tag = tag ? strdup(tag) : NULL;
-    if (tag && !impl->tag) return RGW_SAL_ERR_OUT_OF_MEMORY;
-
-    impl->mtime = time(NULL);
-
-    (void)dpp;
-    (void)y;
-    return RGW_SAL_OK;
-}
-
 /* 桶 vtable */
 static rgw_sal_bucket_vtable_t rados_bucket_vtable = {
     .clone = rados_bucket_clone,
@@ -1181,8 +1039,6 @@ static rgw_sal_bucket_vtable_t rados_bucket_vtable = {
     .set_acl = rados_bucket_set_acl,
     .get_policy = rados_bucket_get_policy,
     .set_policy = rados_bucket_set_policy,
-    .get_tag = rados_bucket_get_tag,
-    .set_tag = rados_bucket_set_tag,
     .get_usage = rados_bucket_get_usage,
     .read_stats = rados_bucket_read_stats,
     .complete_stats = rados_bucket_complete_stats,
@@ -1211,13 +1067,6 @@ static void* rados_object_clone(const rgw_sal_object_t* obj) {
     if (old_impl->bucket_name) new_impl->bucket_name = strdup(old_impl->bucket_name);
     if (old_impl->bucket_tenant) new_impl->bucket_tenant = strdup(old_impl->bucket_tenant);
     new_impl->is_null = old_impl->is_null;
-    new_impl->size = old_impl->size;
-    new_impl->mtime = old_impl->mtime;
-    new_impl->written = old_impl->written;
-    new_impl->deleted = old_impl->deleted;
-    new_impl->loaded = old_impl->loaded;
-    new_impl->is_atomic = old_impl->is_atomic;  /* P0: 复制原子标志 */
-    new_impl->is_expired = old_impl->is_expired; /* P0: 复制过期标志 */
 
     new_obj->vtable = obj->vtable;
     new_obj->impl = new_impl;
@@ -1411,41 +1260,6 @@ static int rados_object_set_obj_attrs(rgw_sal_object_t* obj, rgw_sal_attrs_t* se
     return RGW_SAL_OK;
 }
 
-/* 原子操作标志 (P0: 完整实现) */
-static bool rados_object_is_atomic(const rgw_sal_object_t* obj) {
-    if (!obj) return false;
-    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
-    return impl ? impl->is_atomic : false;
-}
-
-static int rados_object_set_atomic(rgw_sal_object_t* obj, bool atomic) {
-    if (!obj) return RGW_SAL_ERR_INVALID_ARG;
-    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
-    if (impl) {
-        impl->is_atomic = atomic;
-    }
-    return RGW_SAL_OK;
-}
-
-/* 过期检查 (P0: 完整实现) */
-static bool rados_object_is_expired(const rgw_sal_object_t* obj) {
-    if (!obj) return false;
-    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
-    if (!impl || !impl->attrs) return false;
-
-    /* 检查 Expiration-Time 属性 */
-    uint8_t* value = NULL;
-    size_t value_len = 0;
-    int ret = rgw_sal_attrs_get(impl->attrs, " expiration-time", &value, &value_len);
-    if (ret != RGW_SAL_OK || !value) return false;
-
-    /* 解析过期时间并比较 */
-    time_t now = time(NULL);
-    /* 简单解析：假设格式为 Unix 时间戳字符串 */
-    time_t expiry = (time_t)atoll((const char*)value);
-    return now > expiry;
-}
-
 /* 对象 vtable */
 static rgw_sal_object_vtable_t rados_object_vtable = {
     .clone = rados_object_clone,
@@ -1461,10 +1275,6 @@ static rgw_sal_object_vtable_t rados_object_vtable = {
     .load_state = rados_object_load_state,
     .get_obj_attrs = rados_object_get_obj_attrs,
     .set_obj_attrs = rados_object_set_obj_attrs,
-    /* P0: 原子操作和过期检查 */
-    .is_atomic = rados_object_is_atomic,
-    .set_atomic = rados_object_set_atomic,
-    .is_expired = rados_object_is_expired,
 };
 
 /*============================================================================

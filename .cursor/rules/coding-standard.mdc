@@ -1,0 +1,682 @@
+/**
+ * @file coding-standard.mdc
+ * @brief RGW SAL C 接口编码规范
+ *
+ * 本文件定义了 RGW 存储抽象层 (SAL) C 接口的编码规范，
+ * 所有 SAL C 代码必须遵循本规范的约定。
+ */
+
+/*
+ * =============================================================================
+ * 一、文件组织规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 文件头注释 文件头注释规范
+ * @{
+ *
+ * 每个 C 源文件 (.c) 和头文件 (.h) 必须以 Doxygen 格式的文件头注释开始：
+ *
+ * @code
+ * /**
+ *  * @file filename.c
+ *  * @brief 文件简短描述
+ *  *
+ *  * 文件详细描述（可选）。
+ *  * /
+ * @endcode
+ *
+ * @note 文件头注释必须位于文件最顶部，在任何 #include 之前。
+ */
+
+/**
+ * @defgroup 节注释 节注释规范
+ * @{
+ *
+ * 使用以下格式划分代码节：
+ *
+ * @code
+ * /*============================================================================
+ *  * 节名称
+ *  *============================================================================* /
+ * @endcode
+ *
+ * 示例：
+ *
+ * @code
+ * /*============================================================================
+ *  * 用户操作虚函数表
+ *  *============================================================================* /
+ */
+
+/** @} */ /* end of 文件组织规范 */
+
+/*
+ * =============================================================================
+ * 二、注释规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 注释规范 注释规范
+ * @{
+ *
+ * 所有函数、结构体、枚举必须使用 Doxygen 格式的中文注释。
+ */
+
+/**
+ * @defgroup 函数注释 函数注释规范
+ * @{
+ *
+ * 函数注释必须包含：
+ * - @brief: 函数简短描述（必需）
+ * - @param: 参数说明（对于有参数的函数）
+ * - @return: 返回值说明（对于非 void 函数）
+ * - @retval: 可能的返回值及其含义（可选）
+ * - @note: 注意事项（可选）
+ * - @see: 相关函数或文档（可选）
+ *
+ * @code
+ * /**
+ *  * @brief 函数功能简述
+ *  *
+ *  * 函数详细描述，说明函数的作用、行为和实现细节。
+ *  *
+ *  * @param driver 驱动指针，传入用于操作的驱动实例，不能为空
+ *  * @param dpp   调试上下文，用于日志输出，可为空
+ *  * @param y     异步操作上下文，用于协程操作，可为空
+ *  *
+ *  * @return 执行结果
+ *  * @retval RGW_SAL_OK        成功
+ *  * @retval RGW_SAL_ERR_INVALID_ARG 参数无效
+ *  * @retval RGW_SAL_ERR_NO_MEMORY 内存分配失败
+ *  *
+ *  * @note 调用者需要负责释放返回的内存
+ *  * @see rgw_sal_user_destroy()
+ *  * /
+ * int rgw_sal_user_load(rgw_sal_user_t* user,
+ *                       const rgw_sal_dpp_t* dpp,
+ *                       rgw_sal_yield_t* y);
+ * @endcode
+ *
+ * @attention 行内注释使用 /**< 格式，不使用 // 格式
+ *
+ * @code
+ * typedef struct rados_user_impl {
+ *     char* id;                  /**< 用户唯一标识符 */
+ *     char* tenant;              /**< 所属租户 */
+ *     uint32_t user_type;        /**< 用户类型 */
+ *     bool loaded;               /**< 是否已从存储加载 */
+ * } rados_user_impl_t;
+ * @endcode
+ */
+
+/** @} */ /* end of 函数注释规范 */
+
+/**
+ * @defgroup 结构体注释 结构体注释规范
+ * @{
+ *
+ * 结构体注释必须包含：
+ * - @brief: 结构体简短描述
+ * - 每个成员的 @note 或行内注释
+ *
+ * @code
+ * /**
+ *  * @brief RADOS 用户实现结构体
+ *  *
+ *  * 存储 RADOS 驱动中用户相关的运行时信息。
+ *  * 该结构体由驱动内部使用，不对外暴露。
+ *  * /
+ * typedef struct rados_user_impl {
+ *     char* id;                  /**< 用户唯一标识符 */
+ *     char* tenant;              /**< 所属租户 */
+ *     char* display_name;        /**< 显示名称 */
+ *     char* email;               /**< 电子邮箱 */
+ *     char* ns;                  /**< 命名空间 */
+ *     uint32_t user_type;        /**< 用户类型 */
+ *     int32_t max_buckets;       /**< 最大桶数量限制 */
+ *     rgw_sal_attrs_t* attrs;    /**< 用户属性映射 */
+ *     void* quota_info;          /**< 配额信息指针 */
+ *     void* user_caps;           /**< 用户权限指针 */
+ *     void* version_tracker;     /**< 版本跟踪器指针 */
+ *     bool loaded;               /**< 是否已从存储加载 */
+ * } rados_user_impl_t;
+ * @endcode
+ */
+
+/** @} */ /* end of 结构体注释规范 */
+
+/** @} */ /* end of 注释规范 */
+
+/*
+ * =============================================================================
+ * 三、缩进与格式规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 缩进规范 缩进与格式规范
+ * @{
+ *
+ * - 使用空格缩进，不使用 Tab 字符
+ * - 缩进宽度：4 个空格
+ * - 大括号风格：K&R 风格（函数体外大括号单独一行，函数内大括号与关键字同行）
+ * - 每行最大长度：100 字符（软限制，可根据实际情况调整）
+ */
+
+/**
+ * @defgroup 缩进示例 缩进示例
+ * @{
+ *
+ * @code
+ * /* 正确的缩进示例 */
+ * int rgw_sal_user_load(rgw_sal_user_t* user,
+ *                        const rgw_sal_dpp_t* dpp,
+ *                        rgw_sal_yield_t* y) {
+ *     if (!user) {
+ *         return RGW_SAL_ERR_INVALID_ARG;
+ *     }
+ *
+ *     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+ *     if (!impl) {
+ *         return RGW_SAL_ERR_INVALID_ARG;
+ *     }
+ *
+ *     return RGW_SAL_OK;
+ * }
+ *
+ * /* 函数声明的缩进 */
+ * int rgw_sal_create_bucket(rgw_sal_driver_t* driver,
+ *                            const char* bucket_name,
+ *                            const char* owner_id,
+ *                            rgw_sal_bucket_t** result);
+ * @endcode
+ */
+
+/** @} */ /* end of 缩进示例 */
+
+/** @} */ /* end of 缩进规范 */
+
+/*
+ * =============================================================================
+ * 四、命名规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 命名规范 命名规范
+ * @{
+ *
+ * 遵循统一的命名约定，保持代码风格一致。
+ */
+
+/**
+ * @defgroup 类型命名 类型命名
+ * @{
+ *
+ * | 类型 | 命名规则 | 示例 |
+ * |------|----------|------|
+ * | 公开类型 | `rgw_sal_<功能>_<类型>` | `rgw_sal_user_t`, `rgw_sal_bucket_t` |
+ * | 内部类型 | `<驱动>_impl_t` | `rados_user_impl_t`, `dbstore_bucket_impl_t` |
+ * | 虚函数表类型 | `rgw_sal_<实体>_vtable` | `rgw_sal_user_vtable_t` |
+ * | 不透明句柄 | `rgw_sal_<实体>_t` | `rgw_sal_driver_t`, `rgw_sal_attrs_t` |
+ */
+
+/**
+ * @defgroup 函数命名 函数命名
+ * @{
+ *
+ * | 作用域 | 命名规则 | 示例 |
+ * |--------|----------|------|
+ * | SAL 核心层 | `rgw_sal_<操作>` | `rgw_sal_user_load()`, `rgw_sal_bucket_create()` |
+ * | 驱动层 | `<驱动>_<实体>_<操作>` | `rados_user_load()`, `rados_bucket_create()` |
+ * | vtable 函数 | `<操作>` | `(*load)()`, `(*store)()` |
+ * | 内部辅助函数 | `<驱动>_<功能>_<操作>` | `rados_user_get_display_name()` |
+ */
+
+/**
+ * @defgroup 变量命名 变量命名
+ * @{
+ *
+ * | 类型 | 命名规则 | 示例 |
+ * |------|----------|------|
+ * | 结构体成员 | 驼峰命名或下划线分隔 | `user_id`, `max_buckets` |
+ * | 局部变量 | 下划线分隔 | `user_impl`, `result_code` |
+ * | 参数 | 下划线分隔 | `bucket_name`, `owner_id` |
+ * | 循环变量 | 单字母或 `i`, `j`, `k` | `for (int i = 0; ...)` |
+ */
+
+/**
+ * @defgroup 宏命名 宏命名
+ * @{
+ *
+ * - 所有宏使用大写字母
+ * | 宏类型 | 命名规则 | 示例 |
+ * |--------|----------|------|
+ * | 错误码 | `RGW_SAL_ERR_<名称>` | `RGW_SAL_ERR_INVALID_ARG` |
+ * | 版本号 | `RGW_SAL_VERSION_<名称>` | `RGW_SAL_VERSION_MAJOR` |
+ * | 常量 | `RGW_SAL_<功能>_<名称>` | `RGW_SAL_MAX_NAME_LEN` |
+ * | 标志位 | `RGW_SAL_<实体>_FLAG_<名称>` | `RGW_SAL_USER_FLAG_SUSPENDED` |
+ */
+
+/** @} */ /* end of 宏命名 */
+
+/** @} */ /* end of 命名规范 */
+
+/*
+ * =============================================================================
+ * 五、常量与魔法数规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 常量规范 常量与魔法数规范
+ * @{
+ *
+ * @attention 禁止在代码中直接使用魔法数（Magic Numbers）
+ *
+ * 所有数字常量必须定义为具名宏或常量变量：
+ */
+
+/**
+ * @defgroup 正确示例 正确示例
+ * @{
+ *
+ * @code
+ * /*============================================================================
+ *  * 常量定义
+ *  *============================================================================* /
+ *
+ * #define RGW_SAL_MAX_USER_ID_LEN     256
+ * #define RGW_SAL_MAX_BUCKET_NAME_LEN 255
+ * #define RGW_SAL_MAX_OBJECT_NAME_LEN 1024
+ * #define RGW_SAL_DEFAULT_SHARDS       11
+ * #define RGW_SAL_MAX_RETRIES          20
+ *
+ * /* 缓冲区大小常量 */
+ * #define RGW_SAL_BUCKET_ID_BUF_SIZE   256
+ * #define RGW_SAL_USER_KEY_BUF_SIZE    128
+ *
+ * /* 版本号 */
+ * #define RGW_SAL_ENCODE_VERSION_START 23
+ * #define RGW_SAL_ENCODE_VERSION_END   9
+ *
+ * int rgw_sal_process_data(rgw_sal_user_t* user,
+ *                          uint8_t* buffer,
+ *                          size_t buffer_size) {
+ *     if (buffer_size > RGW_SAL_MAX_OBJECT_NAME_LEN) {
+ *         return RGW_SAL_ERR_INVALID_ARG;
+ *     }
+ *
+ *     for (int retry = 0; retry < RGW_SAL_MAX_RETRIES; retry++) {
+ *         /* 处理逻辑 */
+ *     }
+ *
+ *     return RGW_SAL_OK;
+ * }
+ * @endcode
+ */
+
+/** @} */ /* end of 正确示例 */
+
+/**
+ * @defgroup 错误示例 错误示例（禁止使用）
+ * @{
+ *
+ * @code
+ * /* 错误：使用魔法数 */
+ * int rgw_sal_process_data(rgw_sal_user_t* user,
+ *                          uint8_t* buffer,
+ *                          size_t buffer_size) {
+ *     if (buffer_size > 1024) {         /* 错误：魔法数 */
+ *         return -1;
+ *     }
+ *
+ *     for (int retry = 0; retry < 20; retry++) {  /* 错误：魔法数 */
+ *         /* 处理逻辑 */
+ *     }
+ *
+ *     if (result == -5) {               /* 错误：魔法数 */
+ *         return -1;
+ *     }
+ *
+ *     return 0;
+ * }
+ * @endcode
+ */
+
+/** @} */ /* end of 错误示例 */
+
+/** @} */ /* end of 常量规范 */
+
+/*
+ * =============================================================================
+ * 六、错误处理规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 错误处理 错误处理规范
+ * @{
+ *
+ * 所有可能失败的函数必须返回错误码。
+ */
+
+/**
+ * @defgroup 错误码定义 错误码定义
+ * @{
+ *
+ * 错误码定义规则：
+ * - 使用正数表示成功（部分 API）
+ * - 使用负数表示错误（与 POSIX 保持一致）
+ * - 0 表示成功
+ */
+
+/**
+ * @brief 错误码定义
+ *
+ * | 错误码 | 值 | 含义 |
+ * |--------|-----|------|
+ * | RGW_SAL_OK | 0 | 成功 |
+ * | RGW_SAL_ERR_INVALID_ARG | -1 | 参数无效 |
+ * | RGW_SAL_ERR_NO_MEMORY | -2 | 内存分配失败 |
+ * | RGW_SAL_ERR_NOT_FOUND | -3 | 资源不存在 |
+ * | RGW_SAL_ERR_EXISTS | -4 | 资源已存在 |
+ * | RGW_SAL_ERR_NOT_IMPLEMENTED | -5 | 功能未实现 |
+ * | RGW_SAL_ERR_PERMISSION_DENIED | -6 | 权限不足 |
+ * | RGW_SAL_ERR_OPERATION_IN_PROGRESS | -7 | 操作正在进行中 |
+ * | RGW_SAL_ERR_INTERNAL | -99 | 内部错误 |
+ */
+
+/**
+ * @defgroup 参数校验 参数校验规范
+ * @{
+ *
+ * 函数入口必须进行参数校验：
+ *
+ * @code
+ * int rgw_sal_user_load(rgw_sal_user_t* user,
+ *                        const rgw_sal_dpp_t* dpp,
+ *                        rgw_sal_yield_t* y) {
+ *     /* 必须校验所有输入参数 */
+ *     if (!user) {
+ *         return RGW_SAL_ERR_INVALID_ARG;
+ *     }
+ *
+ *     if (!user->impl) {
+ *         return RGW_SAL_ERR_INVALID_ARG;
+ *     }
+ *
+ *     /* 函数逻辑 */
+ *
+ *     (void)dpp;  /* 未使用的参数显式标记 */
+ *     (void)y;
+ *
+ *     return RGW_SAL_OK;
+ * }
+ * @endcode
+ */
+
+/** @} */ /* end of 参数校验 */
+
+/** @} */ /* end of 错误处理 */
+
+/*
+ * =============================================================================
+ * 七、内存管理规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 内存管理 内存管理规范
+ * @{
+ *
+ * 遵循谁分配谁释放的原则。
+ */
+
+/**
+ * @defgroup 内存分配 内存分配规范
+ * @{
+ *
+ * - 使用 `malloc()` / `free()` 或统一封装
+ * - 字符串使用 `strdup()` 复制
+ * - 分配失败必须检查
+ *
+ * @code
+ * int rgw_sal_create_user(rgw_sal_driver_t* driver,
+ *                          const char* user_id,
+ *                          rgw_sal_user_t** result) {
+ *     if (!driver || !user_id || !result) {
+ *         return RGW_SAL_ERR_INVALID_ARG;
+ *     }
+ *
+ *     rgw_sal_user_t* user = (rgw_sal_user_t*)malloc(sizeof(rgw_sal_user_t));
+ *     if (!user) {
+ *         return RGW_SAL_ERR_NO_MEMORY;
+ *     }
+ *
+ *     rados_user_impl_t* impl = (rados_user_impl_t*)malloc(sizeof(rados_user_impl_t));
+ *     if (!impl) {
+ *         free(user);
+ *         return RGW_SAL_ERR_NO_MEMORY;
+ *     }
+ *
+ *     memset(impl, 0, sizeof(rados_user_impl_t));
+ *
+ *     impl->id = strdup(user_id);
+ *     if (!impl->id) {
+ *         free(impl);
+ *         free(user);
+ *         return RGW_SAL_ERR_NO_MEMORY;
+ *     }
+ *
+ *     user->impl = impl;
+ *     *result = user;
+ *
+ *     return RGW_SAL_OK;
+ * }
+ * @endcode
+ */
+
+/**
+ * @defgroup 内存释放 内存释放规范
+ * @{
+ *
+ * - 所有动态分配必须释放
+ * - 释放后将指针置为 NULL
+ * - 使用 goto 统一处理错误路径
+ *
+ * @code
+ * void rgw_sal_user_destroy(rgw_sal_user_t* user) {
+ *     if (!user) {
+ *         return;
+ *     }
+ *
+ *     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+ *     if (impl) {
+ *         free(impl->id);
+ *         free(impl->display_name);
+ *         free(impl->email);
+ *         free(impl->tenant);
+ *         free(impl->ns);
+ *         /* 释放其他动态成员 */
+ *         free(impl);
+ *         impl = NULL;
+ *     }
+ *
+ *     free(user);
+ * }
+ * @endcode
+ */
+
+/** @} */ /* end of 内存释放 */
+
+/** @} */ /* end of 内存管理 */
+
+/*
+ * =============================================================================
+ * 八、虚函数表 (vtable) 规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup vtable 虚函数表规范
+ * @{
+ *
+ * 使用 vtable 模式实现多态。
+ */
+
+/**
+ * @defgroup vtable 定义 vtable 定义规范
+ * @{
+ *
+ * @code
+ * /**
+ *  * @brief 用户操作虚函数表
+ *  *
+ *  * 定义用户对象支持的所有操作。
+ *  * 驱动必须实现此表中定义的所有函数指针。
+ *  * /
+ * typedef struct rgw_sal_user_vtable {
+ *     /* 生命周期 */
+ *     void* (*clone)(const rgw_sal_user_t* user);              /**< 克隆用户对象 */
+ *     void (*destroy)(rgw_sal_user_t* user);                   /**< 销毁用户对象 */
+ *
+ *     /* 属性访问 */
+ *     const char* (*get_id)(const rgw_sal_user_t* user);       /**< 获取用户 ID */
+ *     const char* (*get_tenant)(const rgw_sal_user_t* user);   /**< 获取租户 */
+ *
+ *     /* 持久化操作 */
+ *     int (*load)(rgw_sal_user_t* user,                        /**< 从存储加载 */
+ *                 const rgw_sal_dpp_t* dpp,
+ *                 rgw_sal_yield_t* y);
+ *     int (*store)(rgw_sal_user_t* user,                       /**< 保存到存储 */
+ *                  const rgw_sal_dpp_t* dpp,
+ *                  rgw_sal_yield_t* y,
+ *                  bool exclusive);
+ *     int (*remove)(rgw_sal_user_t* user,                      /**< 从存储删除 */
+ *                   const rgw_sal_dpp_t* dpp,
+ *                   rgw_sal_yield_t* y);
+ * } rgw_sal_user_vtable_t;
+ * @endcode
+ */
+
+/**
+ * @defgroup vtable 实现 vtable 实现规范
+ * @{
+ *
+ * @code
+ * static int rados_user_load(rgw_sal_user_t* user,
+ *                            const rgw_sal_dpp_t* dpp,
+ *                            rgw_sal_yield_t* y) {
+ *     /* 实现细节 */
+ *     return RGW_SAL_OK;
+ * }
+ *
+ * static int rados_user_store(rgw_sal_user_t* user,
+ *                             const rgw_sal_dpp_t* dpp,
+ *                             rgw_sal_yield_t* y,
+ *                             bool exclusive) {
+ *     /* 实现细节 */
+ *     return RGW_SAL_OK;
+ * }
+ *
+ * static rgw_sal_user_vtable_t g_rados_user_vtable = {
+ *     .clone       = rados_user_clone,
+ *     .destroy     = rados_user_destroy,
+ *     .get_id      = rados_user_get_id,
+ *     .get_tenant  = rados_user_get_tenant,
+ *     .load        = rados_user_load,
+ *     .store       = rados_user_store,
+ *     .remove      = rados_user_remove,
+ * };
+ * @endcode
+ */
+
+/** @} */ /* end of vtable 实现 */
+
+/** @} */ /* end of vtable */
+
+/*
+ * =============================================================================
+ * 九、头文件规范
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 头文件 头文件规范
+ * @{
+ *
+ * @code
+ * #ifndef RGW_SAL_H
+ * #define RGW_SAL_H
+ *
+ * #pragma once
+ *
+ * #include <stdint.h>
+ * #include <stdbool.h>
+ * #include <stddef.h>
+ *
+ * #ifdef __cplusplus
+ * extern "C" {
+ * #endif
+ *
+ * /*============================================================================
+ *  * 类型定义和函数声明
+ *  *============================================================================* /
+ *
+ * #ifdef __cplusplus
+ * }
+ * #endif
+ *
+ * #endif /* RGW_SAL_H */
+ * @endcode
+ */
+
+/** @} */ /* end of 头文件 */
+
+/*
+ * =============================================================================
+ * 十、代码审查检查清单
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 检查清单 代码审查检查清单
+ * @{
+ *
+ * 提交代码前必须检查以下项目：
+ *
+ * - [ ] 所有函数都有 Doxygen 格式的中文注释
+ * - [ ] 所有结构体成员都有注释说明
+ * - [ ] 使用空格缩进，无 Tab 字符
+ * - [ ] 无魔法数，所有常量定义为宏
+ * - [ ] 所有输入参数都有空指针检查
+ * - [ ] 所有内存分配都有成功检查
+ * - [ ] 所有内存分配都有对应的释放
+ * - [ ] 未使用的参数使用 `(void)param;` 显式标记
+ * - [ ] 函数返回正确的错误码
+ * - [ ] 命名符合规范（类型、函数、变量、宏）
+ * - [ ] vtable 函数指针都已实现
+ */
+
+/** @} */ /* end of 检查清单 */
+
+/*
+ * =============================================================================
+ * 十一、文档版本
+ * =============================================================================
+ */
+
+/**
+ * @defgroup 版本信息 文档版本
+ * @{
+ *
+ * - 版本: 1.0
+ * - 创建日期: 2026-03-18
+ * - 最后更新: 2026-03-18
+ */
+
+/** @} */ /* end of 版本信息 */

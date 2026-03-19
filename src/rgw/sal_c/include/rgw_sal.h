@@ -58,6 +58,34 @@ typedef struct rgw_sal_user_vtable {
     int (*read_attrs)(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
     int (*merge_and_store_attrs)(rgw_sal_user_t* user, rgw_sal_attrs_t* new_attrs,
                                   const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
+
+    /* 命名空间操作 */
+    const char* (*get_ns)(const rgw_sal_user_t* user);
+    int (*set_ns)(rgw_sal_user_t* user, const char* ns);
+    void (*clear_ns)(rgw_sal_user_t* user);
+
+    /* 配额信息 */
+    int (*set_info)(rgw_sal_user_t* user, void* info);
+    int (*get_info)(rgw_sal_user_t* user, void** info);
+
+    /* 权限管理 */
+    int (*get_caps)(rgw_sal_user_t* user, void** caps);
+    int (*get_version_tracker)(rgw_sal_user_t* user, void** tracker);
+
+    /* 使用统计 */
+    int (*read_usage)(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
+                      uint64_t start_epoch, uint64_t end_epoch,
+                      uint32_t max_entries, void* usage);
+    int (*trim_usage)(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
+                      uint64_t start_epoch, uint64_t end_epoch);
+
+    /* MFA 认证 */
+    int (*verify_mfa)(rgw_sal_user_t* user, const char* mfa, const char* code,
+                      const rgw_sal_dpp_t* dpp);
+
+    /* 组管理 */
+    int (*list_groups)(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
+                       void** groups, uint32_t* count);
 } rgw_sal_user_vtable_t;
 
 /**
@@ -92,6 +120,52 @@ typedef struct rgw_sal_bucket_vtable {
     int (*store)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
                  rgw_sal_yield_t* y, bool exclusive);
     int (*remove)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
+
+    /* 桶操作 */
+    int (*create)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                  rgw_sal_yield_t* y, bool create_obj);
+    int (*delete_bucket)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                         rgw_sal_yield_t* y, bool delete_objects);
+    int (*rename)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                  rgw_sal_yield_t* y, const char* new_name);
+
+    /* ACL/策略 */
+    int (*set_acl)(rgw_sal_bucket_t* bucket, void* acl, const rgw_sal_dpp_t* dpp,
+                   rgw_sal_yield_t* y);
+    int (*get_policy)(rgw_sal_bucket_t* bucket, void** policy, const rgw_sal_dpp_t* dpp,
+                      rgw_sal_yield_t* y);
+    int (*set_policy)(rgw_sal_bucket_t* bucket, void* policy, const rgw_sal_dpp_t* dpp,
+                      rgw_sal_yield_t* y);
+
+    /* 标签 */
+    int (*get_tag)(rgw_sal_bucket_t* bucket, char** tag);
+    int (*set_tag)(rgw_sal_bucket_t* bucket, const char* tag, const rgw_sal_dpp_t* dpp,
+                   rgw_sal_yield_t* y);
+
+    /* 统计 */
+    int (*get_usage)(rgw_sal_bucket_t* bucket, void** usage, const rgw_sal_dpp_t* dpp,
+                     rgw_sal_yield_t* y);
+    int (*read_stats)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                      void* stats);
+    int (*read_stats_async)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                            void* cb);
+    int (*complete_stats)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp);
+    int (*update_bucket_stats)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                                void* stats);
+    int (*sync_user_stats)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                           rgw_sal_yield_t* y);
+
+    /* 同步 */
+    int (*sync)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
+    int (*drain)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
+
+    /* 索引检查 */
+    int (*check_object_index)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                              rgw_sal_yield_t* y);
+    int (*fix_object_index)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                            rgw_sal_yield_t* y);
+    int (*check_bucket_index)(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
+                              rgw_sal_yield_t* y);
 } rgw_sal_bucket_vtable_t;
 
 /**
@@ -132,6 +206,11 @@ typedef struct rgw_sal_object_vtable {
     int (*set_obj_attrs)(rgw_sal_object_t* obj, rgw_sal_attrs_t* setattrs,
                           rgw_sal_attrs_t* delattrs, rgw_sal_yield_t* y,
                           uint32_t flags);
+
+    /* 原子操作和状态 (P0) */
+    bool (*is_atomic)(const rgw_sal_object_t* obj);
+    int (*set_atomic)(rgw_sal_object_t* obj, bool atomic);
+    bool (*is_expired)(const rgw_sal_object_t* obj);
 } rgw_sal_object_vtable_t;
 
 /**

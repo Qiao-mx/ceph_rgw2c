@@ -16,6 +16,14 @@ alwaysApply: true
 2. **`memory-bank/@cpp2c-document.md`** - C++ 转 C 的转换规范和指南
 3. **`memory-bank/@implementation-plan.md`** - 实施计划
 
+### 编码标记规范
+
+1. 不依赖未实现功能的函数，不要使用简化的实现或标记为todo，必须完成全部功能的转化
+2. 存根函数和标记有todo的函数、功能未完全实现的函数、文件不能标记为已完成，必须要在progress.md和implementation-plan.md标记为待办，并标注没有完成的原因
+3. 代码转C前后保证有对应的C++原文件或新增文件，必须保证转换前后功能没有缺失。整个文件的功能没有完全实现，不能标记为已完成，必须要在progress.md和implementation-plan.md标记为待办，并标注没有完成的原因
+4. 当待办事项的完成条件满足后，优先完成待办事项
+
+
 ### 不要重复造轮子
 
 - 如有需要，**必须**优先使用 `c_common` 文件夹下已经转换成 C 库的数据结构
@@ -74,6 +82,7 @@ alwaysApply: true
    - 更新 progress.md
    - 更新 architecture.md（如需要）
    - 运行测试确保没有引入回归
+
 
 ### 编译和测试要求
 

@@ -15,19 +15,19 @@ ceph-20.1.1/
 │   │   ├── include/                 # 头文件
 │   │   │   ├── containers/          # 容器头文件
 │   │   │   │   ├── rgw_carray.h    # 动态数组
-│   │   │   │   ├── rgw_cstring.h  # 字符串
-│   │   │   │   ├── rgw_cmap.h    # 有序 Map
-│   │   │   │   ├── rgw_cset.h     # 有序 Set
-│   │   │   │   ├── rgw_clist.h    # 双向链表
-│   │   │   │   ├── rgw_cdeque.h   # 双端队列
-│   │   │   │   ├── rgw_cstack.h   # 栈
-│   │   │   │   ├── rgw_cqueue.h   # 队列
+│   │   │   │   ├── rgw_cstring.h    # 字符串
+│   │   │   │   ├── rgw_cmap.h      # 有序 Map
+│   │   │   │   ├── rgw_cset.h      # 有序 Set
+│   │   │   │   ├── rgw_clist.h      # 双向链表
+│   │   │   │   ├── rgw_cdeque.h    # 双端队列
+│   │   │   │   ├── rgw_cstack.h    # 栈
+│   │   │   │   ├── rgw_cqueue.h    # 队列
 │   │   │   │   ├── rgw_cpriority_queue.h # 优先队列
-│   │   │   │   ├── rgw_chash_map.h # 哈希表
-│   │   │   │   └── rgw_coptional.h # 可选类型
+│   │   │   │   ├── rgw_chash_map.h  # 哈希表
+│   │   │   │   └── rgw_coptional.h  # 可选类型
 │   │   │   ├── internal/            # 内部头文件（第三方库）
-│   │   │   ├── rgw_ccommon.h        # 统一头文件
-│   │   │   ├── rgw_oop.h            # OOP 框架
+│   │   │   ├── rgw_ccommon.h       # 统一头文件
+│   │   │   ├── rgw_oop.h           # OOP 框架
 │   │   │   └── rgw_errors.h         # 错误处理
 │   │   ├── src/                     # 源文件
 │   │   │   ├── rgw_cmemory.c        # 内存管理
@@ -42,19 +42,53 @@ ceph-20.1.1/
 │   │   │   ├── rgw_cqueue.c         # 队列
 │   │   │   ├── rgw_oop.c            # OOP 实现
 │   │   │   ├── rgw_errors.c         # 错误处理实现
-│   │   ├── containers/               # 容器实现（第三方库封装）
-│   │   │   ├── rgw_clist.c          # 双向链表
-│   │   │   ├── rgw_chash_map.c      # 哈希表
-│   │   │   └── (其他容器)
-│   │   ├── tests/                    # 测试文件
-│   │   ├── build/                    # 构建目录
-│   │   ├── CMakeLists.txt           # 构建配置
-│   │   └── memory-bank/             # 项目文档
+│   │   │   ├── rgw_xml.c           # XML 解析器
+│   │   │   ├── rgw_b64.c           # Base64 编解码
+│   │   │   └── rgw_hex.c           # 十六进制编解码
+│   │   ├── containers/              # 容器实现（第三方库封装）
+│   │   │   ├── rgw_clist.c         # 双向链表
+│   │   │   └── rgw_chash_map.c     # 哈希表
+│   │   ├── tests/                   # 测试文件
+│   │   ├── build/                   # 构建目录
+│   │   ├── CMakeLists.txt          # 构建配置
+│   │   └── memory-bank/            # 项目文档
 │   │       ├── architecture.md      # 本文档
-│   │       ├── cpp2c-document.md    # 转换概要设计
+│   │       ├── cpp2c-document.md   # 转换概要设计
 │   │       ├── implementation-plan.md # 实施计划
-│   │       ├── tech-stack.md        # 技术栈
-│   │       └── FILE_STRUCTURE.md    # 文件结构说明
+│   │       ├── tech-stack.md       # 技术栈
+│   │       └── progress.md         # 进度跟踪
+│   │
+│   ├── sal_c/                       # SAL C 接口（存储抽象层转换）
+│   │   ├── include/                 # SAL C 头文件
+│   │   │   ├── rgw_sal_errors.h    # 错误码定义
+│   │   │   ├── rgw_sal_types.h     # 核心类型定义
+│   │   │   ├── rgw_sal.h           # 主 SAL C 接口 (含 vtable)
+│   │   │   ├── rgw_sal_c.h         # 统一头文件
+│   │   │   ├── rgw_sal_rados.h     # RADOS 驱动 C 接口
+│   │   │   ├── rgw_sal_dbstore.h   # DBStore 驱动 C 接口
+│   │   │   ├── rgw_sal_posix.h     # POSIX 驱动 C 接口
+│   │   │   ├── rgw_sal_d4n.h       # D4N 驱动 C 接口
+│   │   │   ├── rgw_sal_motr.h      # Motr 驱动 C 接口
+│   │   │   └── rgw_sal_daos.h      # DAOS 驱动 C 接口
+│   │   ├── src/                     # SAL C 源文件
+│   │   │   ├── rgw_sal_types.c     # 类型实现
+│   │   │   ├── rgw_sal.c           # 基础 SAL API
+│   │   │   ├── rgw_sal_rados.c     # RADOS 驱动实现
+│   │   │   ├── rgw_sal_dbstore.c   # DBStore 驱动实现
+│   │   │   ├── rgw_sal_posix.c     # POSIX 驱动实现
+│   │   │   ├── rgw_sal_d4n.c       # D4N 驱动实现
+│   │   │   ├── rgw_sal_motr.c      # Motr 驱动实现
+│   │   │   └── rgw_sal_daos.c      # DAOS 驱动实现
+│   │   ├── tests/                   # SAL C 测试
+│   │   │   ├── CMakeLists.txt      # 测试构建配置
+│   │   │   ├── test_rados_driver.c  # RADOS 驱动测试 (35个测试)
+│   │   │   ├── test_dbstore_driver.c # DBStore 驱动测试
+│   │   │   └── test_integration.c   # 集成测试
+│   │   ├── build/                   # 构建目录
+│   │   ├── CMakeLists.txt           # 构建配置
+│   │   ├── MAPPING_DETAIL.md        # C++ 到 C 详细映射
+│   │   └── IMPLEMENTATION_SUMMARY.md # 实现总结
+│   │
 │   └── (其他 RGW 代码)
 ```
 
@@ -62,13 +96,16 @@ ceph-20.1.1/
 
 | 目录 | 内容 | 说明 |
 |------|------|------|
-| `include/containers/` | 容器头文件 | 公开 API |
-| `include/internal/` | 内部头文件 | 第三方库封装 |
-| `include/` | 核心头文件 | OOP、错误处理、统一入口 |
-| `src/` | 核心源文件 | 主要实现 |
-| `containers/` | 容器源文件 | 容器实现 |
-| `tests/` | 测试文件 | 单元测试 |
-| `build/` | 构建目录 | CMake 构建输出 |
+| `c_common/include/containers/` | 容器头文件 | 公开 API |
+| `c_common/include/internal/` | 内部头文件 | 第三方库封装 |
+| `c_common/include/` | 核心头文件 | OOP、错误处理、统一入口 |
+| `c_common/src/` | 核心源文件 | 主要实现 |
+| `c_common/containers/` | 容器源文件 | 容器实现 |
+| `c_common/tests/` | 测试文件 | 单元测试 |
+| `c_common/build/` | 构建目录 | CMake 构建输出 |
+| `sal_c/include/` | SAL C 头文件 | SAL 接口定义 |
+| `sal_c/src/` | SAL C 源文件 | 驱动实现 |
+| `sal_c/tests/` | SAL C 测试 | 驱动测试 |
 
 ## 3. C 版本代码结构
 
@@ -152,20 +189,148 @@ typedef enum rgw_error_code {
 | 源文件 | `rgw_xxx.c` | `rgw_carray.c` |
 | 测试文件 | `test_xxx.c` | `test_carray.c` |
 
-## 4. 当前转换进度
+## 4. SAL C 接口架构
 
-### 4.1 阶段完成状态
+### 4.1 SAL 概述
+
+SAL (Storage Abstraction Layer) 是 RGW 的核心抽象层，将上层协议处理与底层存储后端解耦。
+
+### 4.2 SAL 架构图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        RGW 上层                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │ S3 协议处理 │  │Swift 协议处理│  │ REST 管理接口       │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    SAL C 抽象层 (本阶段目标)                 │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │              Driver (抽象存储驱动)                       │ │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌──────────┐   │ │
+│  │  │  User   │  │ Bucket  │  │ Object  │  │  其他    │   │ │
+│  │  └─────────┘  └─────────┘  └─────────┘  └──────────┘   │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    存储后端实现                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │  RADOS   │  │ DBStore  │  │  POSIX   │  │  其他    │  │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.3 SAL C 接口核心类型
+
+#### 4.3.1 用户类型
+
+```c
+typedef struct rgw_sal_user_id {
+    char* id;           // 用户 ID
+    char* tenant;        // 租户
+    char* ns;           // 命名空间
+    uint32_t type;      // 用户类型
+} rgw_sal_user_id_t;
+
+typedef struct rgw_sal_user {
+    const rgw_sal_user_vtable_t* vtable;
+    void* impl;         // 驱动特定实现
+    rgw_sal_driver_t* driver;
+} rgw_sal_user_t;
+```
+
+#### 4.3.2 桶类型
+
+```c
+typedef struct rgw_sal_bucket_id {
+    char* name;         // 桶名称
+    char* tenant;       // 租户
+    char* marker;        // 桶标记
+    char* bucket_id;    // 桶 ID
+} rgw_sal_bucket_id_t;
+
+typedef struct rgw_sal_bucket {
+    const rgw_sal_bucket_vtable_t* vtable;
+    void* impl;
+    rgw_sal_driver_t* driver;
+} rgw_sal_bucket_t;
+```
+
+#### 4.3.3 对象类型
+
+```c
+typedef struct rgw_sal_obj_key {
+    char* name;         // 对象名称
+    char* instance;     // 版本 ID
+    bool is_null;       // 是否为空
+    bool is_current;    // 是否为当前版本
+} rgw_sal_obj_key_t;
+
+typedef struct rgw_sal_object {
+    const rgw_sal_object_vtable_t* vtable;
+    void* impl;
+    rgw_sal_bucket_t* bucket;
+} rgw_sal_object_t;
+```
+
+#### 4.3.4 驱动类型
+
+```c
+typedef struct rgw_sal_driver {
+    const rgw_sal_driver_vtable_t* vtable;
+    const rgw_sal_user_vtable_t* user_vtable;
+    const rgw_sal_bucket_vtable_t* bucket_vtable;
+    const rgw_sal_object_vtable_t* object_vtable;
+    void* impl;
+    char name[64];
+} rgw_sal_driver_t;
+```
+
+### 4.4 虚函数表 (vtable) 模式
+
+SAL C 使用虚函数表实现多态：
+
+```c
+typedef struct rgw_sal_driver_vtable {
+    void (*destroy)(rgw_sal_driver_t* driver);
+    int (*initialize)(rgw_sal_driver_t* driver, void* cct, const rgw_sal_dpp_t* dpp);
+    const char* (*get_name)(const rgw_sal_driver_t* driver);
+    int (*get_cluster_id)(rgw_sal_driver_t* driver, char** cluster_id,
+                          const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
+    // ... 更多函数指针
+} rgw_sal_driver_vtable_t;
+```
+
+### 4.5 已实现的存储驱动
+
+| 驱动 | 说明 | 源文件 | 状态 |
+|------|------|--------|------|
+| RADOS | Ceph 对象存储后端 | rgw_sal_rados.c/h | ✅ 已完成 |
+| DBStore | SQLite 数据库后端 | rgw_sal_dbstore.c/h | ✅ 已完成 |
+| POSIX | 文件系统后端 | rgw_sal_posix.c/h | ✅ 已完成 |
+| D4N | Data for Nginx 缓存 | rgw_sal_d4n.c/h | ✅ 已完成 |
+| Motr | Dell EMC Motr 后端 | rgw_sal_motr.c/h | ✅ 已完成 |
+| DAOS | Intel DAOS 后端 | rgw_sal_daos.c/h | ✅ 已完成 |
+
+## 5. 当前转换进度
+
+### 5.1 阶段完成状态
 
 | 阶段 | 内容 | 状态 |
 |------|------|------|
-| 阶段 0 | 基础设施准备 | 🔄 进行中 |
-| 阶段 1 | 核心数据类型转换 | ⏳ 待开始 |
-| 阶段 2 | 存储抽象层转换 | ⏳ 待开始 |
+| 阶段 0 | 基础设施准备 | ✅ 已完成 |
+| 阶段 1 | 核心数据类型转换 | ✅ 已完成 |
+| 阶段 2 | 存储抽象层转换 (SAL) | ✅ 已完成 |
 | 阶段 3 | REST 核心转换 | ⏳ 待开始 |
 | 阶段 4 | 上层模块转换 | ⏳ 待开始 |
 | 阶段 5 | 优化与收尾 | ⏳ 待开始 |
 
-### 阶段 0 - 基础设施准备 (已完成)
+### 5.2 阶段 0 - 基础设施准备 ✅ 已完成
 
 - ✅ c_common 容器库完善
   - ✅ 动态数组 (rgw_carray)
@@ -174,29 +339,36 @@ typedef enum rgw_error_code {
   - ✅ 有序 Set (rgw_cset)
   - ✅ 双向链表 (rgw_clist)
   - ✅ 双端队列 (rgw_cdeque)
-  - ✅ 栈 (rgw_cstack)
-  - ✅ 队列 (rgw_cqueue)
-- ✅ 优先队列 (rgw_cpriority_queue)
+  - ✅ 栈 (rgw_stack)
+  - ✅ 队列 (rgw_queue)
+  - ✅ 优先队列 (rgw_cpriority_queue)
+  - ✅ 哈希表 (rgw_chash_map)
+  - ✅ 可选类型 (rgw_coptional)
 - ✅ OOP 框架 (rgw_oop)
 - ✅ 错误处理 (rgw_errors)
 - ✅ 统一头文件 (rgw_ccommon)
-  - ✅ 哈希表 (rgw_chash_map)
-  - ✅ 可选类型 (rgw_coptional)
-  - ✅ 优先队列 (rgw_priority_queue_t)
 
-- ✅ C 语言面向对象框架 (rgw_oop)
-  - 🔄 虚函数表模式 - 待实现
-  - 🔄 引用计数智能指针 - 待实现
+### 5.3 阶段 1 - 核心数据类型转换 ✅ 已完成
 
-- ✅ 错误处理机制 (rgw_errors)
-  - 🔄 统一错误码 - 待实现
-  - 🔄 错误链支持 - 待实现
+- ✅ rgw_string - 字符串处理 C 实现
+- ✅ rgw_xml - XML 解析器 C 实现
+- ✅ rgw_b64 - Base64 编解码 C 实现
+- ✅ rgw_hex - 十六进制编解码 C 实现
 
-- ✅ 测试框架（基础测试通过，完善中）
-  - ✅ 基础测试通过
-  - 🔄 完善容器测试用例 - 进行中
+### 5.4 阶段 2 - 存储抽象层转换 (SAL) ✅ 已完成
 
-### 4.2 测试状态
+- ✅ SAL C 接口设计 (vtable 模式)
+- ✅ RADOS 驱动实现
+- ✅ DBStore 驱动实现
+- ✅ POSIX 驱动实现
+- ✅ D4N 驱动实现
+- ✅ Motr 驱动实现
+- ✅ DAOS 驱动实现
+- ✅ 完整测试套件 (35 个测试)
+
+### 5.5 测试状态
+
+#### 5.5.1 c_common 容器测试
 
 | 测试 | 状态 |
 |------|------|
@@ -209,38 +381,32 @@ typedef enum rgw_error_code {
 | test_coptional | ✅ PASSED |
 | test_all | ✅ PASSED |
 | test_ccontainer | ✅ PASSED |
-| test_cpp_to_c | ✅ PASSED |
 
-## 5. 后续计划
+#### 5.5.2 SAL C 驱动测试
 
-### 5.1 SAL 存储抽象层转换 (当前阶段)
+| 测试 | 测试数 | 通过 |
+|------|--------|------|
+| RADOS 驱动测试 | 35 | ✅ 35/35 |
+| DBStore 驱动测试 | 7 | ✅ 7/7 |
+| 综合集成测试 | 9 | ✅ 9/9 |
+| **总计** | **51** | **51 ✅** |
 
-详细计划见 `sal-conversion-plan.md`
+#### 5.5.3 AddressSanitizer 检测
 
-**核心任务**:
+- ✅ 内存泄漏检测
+- ✅ 使用后释放检测
+- ✅ 双重释放检测
+- ✅ 缓冲区溢出检测
 
-| 任务 | 说明 | 状态 |
-|------|------|------|
-| 分析 SAL C++ 接口 | 理解现有架构 | ✅ 完成 |
-| 创建 SAL C 接口目录 | src/rgw/sal_c/ | 🔄 待开始 |
-| 设计 vtable 模式 | C 多态机制 | 🔄 待开始 |
-| RADOS 驱动适配器 | 主要存储后端 | 🔄 待开始 |
-| DBStore 驱动 | SQLite 后端 | 🔄 待开始 |
+## 6. 后续计划
 
-**涉及文件**:
-
-- `rgw_sal.h` - 主接口 (2000+ 行)
-- `rgw_sal_fwd.h` - 前向声明
-- `rgw_sal_filter.h` - 过滤器
-- `driver/rados/rgw_sal_rados.h` - RADOS 驱动
-
-### 5.2 REST 核心转换 (待开始)
+### 6.1 REST 核心转换 (待开始)
 
 - rgw_op.cc - 操作处理器
 - rgw_rest_*.cc - REST 框架
 - S3/Swift 协议实现
 
-### 5.3 上层模块转换 (待开始)
+### 6.2 上层模块转换 (待开始)
 
 - 认证授权模块
 - 服务层
@@ -248,18 +414,20 @@ typedef enum rgw_error_code {
 
 ---
 
-## 6. 参考文档
+## 7. 参考文档
 
 | 文档 | 说明 |
 |------|------|
 | `implementation-plan.md` | 详细实施计划 |
-| `sal-conversion-plan.md` | SAL 转换详细计划 |
-| `tech-stack.md` | 技术栈说明 |
+| `progress.md` | 进度跟踪 |
 | `cpp2c-document.md` | C++ 到 C 转换规范 |
+| `tech-stack.md` | 技术栈说明 |
 | `coding-standards.md` | 编程规范 |
+| `sal_c/MAPPING_DETAIL.md` | SAL C++ 到 C 详细映射 |
+| `sal_c/IMPLEMENTATION_SUMMARY.md` | SAL 实现总结 |
 
 ---
 
-**文档版本**: 1.1
-**最后更新**: 2026-03-18
+**文档版本**: 1.2
+**最后更新**: 2026-03-19
 **维护团队**: RGW C++ 到 C 转换项目组

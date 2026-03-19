@@ -1,22 +1,33 @@
 # SAL C 接口 CMakeLists.txt
 
-# SAL C 接口源文件列表
-set(RGW_SAL_C_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgw_sal_c/src/rgw_sal_types.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgw_sal_c/src/rgw_sal.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgw_sal_c/src/rgw_sal_rados.c
-)
+cmake_minimum_required(VERSION 3.10)
+project(RGWSALC C)
 
 # SAL C 接口头文件目录
 set(RGW_SAL_C_INCLUDE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgw_sal_c/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/drivers
 )
 
-# 创建 SAL C 库 (可选)
-# 如果需要单独编译 SAL C 接口，取消注释以下行
-# add_library(rgw_sal_c STATIC ${RGW_SAL_C_SOURCES})
-# target_include_directories(rgw_sal_c PUBLIC ${RGW_SAL_C_INCLUDE_DIRS})
-# target_link_libraries(rgw_sal_c PUBLIC rgw_c_common)
+# SAL C 接口核心源文件
+set(RGW_SAL_C_CORE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_sal_types.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_sal.c
+)
 
-# 为其他模块提供 SAL C 接口头文件路径
-set(RGW_SAL_C_INCLUDE_DIRS ${RGW_SAL_C_INCLUDE_DIRS} PARENT_SCOPE)
+# SAL C 接口驱动源文件
+set(RGW_SAL_C_DRIVER_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_rados.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_dbstore.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_posix.c
+)
+
+# 合并所有源文件
+set(RGW_SAL_C_SOURCES
+    ${RGW_SAL_C_CORE_SOURCES}
+    ${RGW_SAL_C_DRIVER_SOURCES}
+)
+
+# 包含 tests 子目录
+add_subdirectory(tests)
