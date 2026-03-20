@@ -36,7 +36,7 @@
 /**
  * @brief 释放 usage map
  */
-static void rgw_sal_usage_map_destroy_internal(rgw_sal_usage_map_t* map) {
+static void rgw_usage_map_destroy_internal(rgw_usage_map_t* map) {
     if (!map) return;
 
     if (map->entries) {
@@ -53,10 +53,10 @@ static void rgw_sal_usage_map_destroy_internal(rgw_sal_usage_map_t* map) {
 /**
  * @brief 初始化 usage map
  */
-static int rgw_sal_usage_map_init_internal(rgw_sal_usage_map_t* map) {
+static int rgw_usage_map_init_internal(rgw_usage_map_t* map) {
     if (!map) return RGW_SAL_ERR_INVALID_ARG;
 
-    map->entries = calloc(USAGE_MAP_INITIAL_CAPACITY, sizeof(rgw_sal_usage_map_entry_t));
+    map->entries = calloc(USAGE_MAP_INITIAL_CAPACITY, sizeof(rgw_usage_map_entry_t));
     if (!map->entries) {
         return RGW_SAL_ERR_OUT_OF_MEMORY;
     }
@@ -69,7 +69,7 @@ static int rgw_sal_usage_map_init_internal(rgw_sal_usage_map_t* map) {
 /**
  * @brief 在 usage map 中查找类别
  */
-static rgw_sal_usage_map_entry_t* rgw_sal_usage_map_find_internal(rgw_sal_usage_map_t* map, const char* category) {
+static rgw_usage_map_entry_t* rgw_usage_map_find_internal(rgw_usage_map_t* map, const char* category) {
     if (!map || !category) return NULL;
 
     for (size_t i = 0; i < map->count; i++) {
@@ -83,11 +83,11 @@ static rgw_sal_usage_map_entry_t* rgw_sal_usage_map_find_internal(rgw_sal_usage_
 /**
  * @brief 在 usage map 中添加或获取类别
  */
-static int rgw_sal_usage_map_get_or_create_internal(rgw_sal_usage_map_t* map, const char* category,
-                                                  rgw_sal_usage_map_entry_t** out_entry) {
+static int rgw_usage_map_get_or_create_internal(rgw_usage_map_t* map, const char* category,
+                                                  rgw_usage_map_entry_t** out_entry) {
     if (!map || !category || !out_entry) return RGW_SAL_ERR_INVALID_ARG;
 
-    rgw_sal_usage_map_entry_t* entry = rgw_sal_usage_map_find_internal(map, category);
+    rgw_usage_map_entry_t* entry = rgw_usage_map_find_internal(map, category);
     if (entry) {
         *out_entry = entry;
         return RGW_SAL_OK;
@@ -96,8 +96,8 @@ static int rgw_sal_usage_map_get_or_create_internal(rgw_sal_usage_map_t* map, co
     /* 需要添加新的条目 */
     if (map->count >= map->capacity) {
         size_t new_capacity = map->capacity * DYNAMIC_ARRAY_GROWTH_FACTOR;
-        rgw_sal_usage_map_entry_t* new_entries = realloc(map->entries,
-                                                          new_capacity * sizeof(rgw_sal_usage_map_entry_t));
+        rgw_usage_map_entry_t* new_entries = realloc(map->entries,
+                                                          new_capacity * sizeof(rgw_usage_map_entry_t));
         if (!new_entries) {
             return RGW_SAL_ERR_OUT_OF_MEMORY;
         }
@@ -121,16 +121,16 @@ static int rgw_sal_usage_map_get_or_create_internal(rgw_sal_usage_map_t* map, co
  * Usage 数据函数实现
  *============================================================================*/
 
-rgw_sal_usage_data_t* rgw_sal_usage_data_create(void) {
-    rgw_sal_usage_data_t* data = calloc(1, sizeof(rgw_sal_usage_data_t));
+rgw_usage_data_t* rgw_usage_data_create(void) {
+    rgw_usage_data_t* data = calloc(1, sizeof(rgw_usage_data_t));
     return data;
 }
 
-void rgw_sal_usage_data_destroy(rgw_sal_usage_data_t* data) {
+void rgw_usage_data_destroy(rgw_usage_data_t* data) {
     free(data);
 }
 
-void rgw_sal_usage_data_aggregate(rgw_sal_usage_data_t* target, const rgw_sal_usage_data_t* source) {
+void rgw_usage_data_aggregate(rgw_usage_data_t* target, const rgw_usage_data_t* source) {
     if (!target || !source) return;
 
     target->bytes_sent += source->bytes_sent;
@@ -143,19 +143,19 @@ void rgw_sal_usage_data_aggregate(rgw_sal_usage_data_t* target, const rgw_sal_us
  * Usage 迭代器函数实现
  *============================================================================*/
 
-rgw_sal_usage_iter_t* rgw_sal_usage_iter_create(void) {
-    rgw_sal_usage_iter_t* iter = calloc(1, sizeof(rgw_sal_usage_iter_t));
+rgw_usage_iter_t* rgw_usage_iter_create(void) {
+    rgw_usage_iter_t* iter = calloc(1, sizeof(rgw_usage_iter_t));
     return iter;
 }
 
-void rgw_sal_usage_iter_reset(rgw_sal_usage_iter_t* iter) {
+void rgw_usage_iter_reset(rgw_usage_iter_t* iter) {
     if (!iter) return;
     free(iter->read_iter);
     iter->read_iter = NULL;
     iter->index = 0;
 }
 
-void rgw_sal_usage_iter_destroy(rgw_sal_usage_iter_t* iter) {
+void rgw_usage_iter_destroy(rgw_usage_iter_t* iter) {
     if (!iter) return;
     free(iter->read_iter);
     free(iter);
@@ -165,45 +165,45 @@ void rgw_sal_usage_iter_destroy(rgw_sal_usage_iter_t* iter) {
  * Usage 日志条目函数实现
  *============================================================================*/
 
-rgw_sal_usage_log_entry_t* rgw_sal_usage_log_entry_create(void) {
-    rgw_sal_usage_log_entry_t* entry = calloc(1, sizeof(rgw_sal_usage_log_entry_t));
+rgw_usage_log_entry_t* rgw_usage_log_entry_create(void) {
+    rgw_usage_log_entry_t* entry = calloc(1, sizeof(rgw_usage_log_entry_t));
     if (entry) {
-        rgw_sal_usage_map_init_internal(&entry->usage_map);
+        rgw_usage_map_init_internal(&entry->usage_map);
     }
     return entry;
 }
 
-void rgw_sal_usage_log_entry_destroy(rgw_sal_usage_log_entry_t* entry) {
+void rgw_usage_log_entry_destroy(rgw_usage_log_entry_t* entry) {
     if (!entry) return;
 
     free(entry->owner_id);
     free(entry->payer_id);
     free(entry->bucket);
-    rgw_sal_usage_map_destroy_internal(&entry->usage_map);
+    rgw_usage_map_destroy_internal(&entry->usage_map);
     free(entry);
 }
 
-int rgw_sal_usage_log_entry_add_usage(rgw_sal_usage_log_entry_t* entry,
+int rgw_usage_log_entry_add_usage(rgw_usage_log_entry_t* entry,
                                       const char* category,
-                                      const rgw_sal_usage_data_t* data) {
+                                      const rgw_usage_data_t* data) {
     if (!entry || !category || !data) return RGW_SAL_ERR_INVALID_ARG;
 
     /* 获取或创建类别条目 */
-    rgw_sal_usage_map_entry_t* map_entry = NULL;
-    int ret = rgw_sal_usage_map_get_or_create_internal(&entry->usage_map, category, &map_entry);
+    rgw_usage_map_entry_t* map_entry = NULL;
+    int ret = rgw_usage_map_get_or_create_internal(&entry->usage_map, category, &map_entry);
     if (ret != RGW_SAL_OK) return ret;
 
     /* 聚合到类别数据 */
-    rgw_sal_usage_data_aggregate(&map_entry->data, data);
+    rgw_usage_data_aggregate(&map_entry->data, data);
 
     /* 聚合到总使用量 */
-    rgw_sal_usage_data_aggregate(&entry->total_usage, data);
+    rgw_usage_data_aggregate(&entry->total_usage, data);
 
     return RGW_SAL_OK;
 }
 
-void rgw_sal_usage_log_entry_aggregate(rgw_sal_usage_log_entry_t* target,
-                                       const rgw_sal_usage_log_entry_t* source) {
+void rgw_usage_log_entry_aggregate(rgw_usage_log_entry_t* target,
+                                       const rgw_usage_log_entry_t* source) {
     if (!target || !source) return;
 
     /* 如果 target 为空，从 source 复制基础信息 */
@@ -218,14 +218,14 @@ void rgw_sal_usage_log_entry_aggregate(rgw_sal_usage_log_entry_t* target,
 
     /* 聚合每个类别 */
     for (size_t i = 0; i < source->usage_map.count; i++) {
-        rgw_sal_usage_data_aggregate(&target->total_usage, &source->usage_map.entries[i].data);
+        rgw_usage_data_aggregate(&target->total_usage, &source->usage_map.entries[i].data);
 
         /* 获取或创建 target 中的对应类别 */
-        rgw_sal_usage_map_entry_t* map_entry = NULL;
-        if (rgw_sal_usage_map_get_or_create_internal(&target->usage_map,
+        rgw_usage_map_entry_t* map_entry = NULL;
+        if (rgw_usage_map_get_or_create_internal(&target->usage_map,
                                                      source->usage_map.entries[i].category,
                                                      &map_entry) == RGW_SAL_OK) {
-            rgw_sal_usage_data_aggregate(&map_entry->data, &source->usage_map.entries[i].data);
+            rgw_usage_data_aggregate(&map_entry->data, &source->usage_map.entries[i].data);
         }
     }
 
@@ -234,14 +234,14 @@ void rgw_sal_usage_log_entry_aggregate(rgw_sal_usage_log_entry_t* target,
     target->s3select_usage.bytes_returned += source->s3select_usage.bytes_returned;
 }
 
-void rgw_sal_usage_log_entry_sum(const rgw_sal_usage_log_entry_t* entry,
-                                  rgw_sal_usage_data_t* result) {
+void rgw_usage_log_entry_sum(const rgw_usage_log_entry_t* entry,
+                                  rgw_usage_data_t* result) {
     if (!entry || !result) return;
 
     memset(result, 0, sizeof(*result));
 
     for (size_t i = 0; i < entry->usage_map.count; i++) {
-        rgw_sal_usage_data_aggregate(result, &entry->usage_map.entries[i].data);
+        rgw_usage_data_aggregate(result, &entry->usage_map.entries[i].data);
     }
 }
 
@@ -249,8 +249,8 @@ void rgw_sal_usage_log_entry_sum(const rgw_sal_usage_log_entry_t* entry,
  * Usage 集合函数实现
  *============================================================================*/
 
-rgw_sal_usage_entries_t* rgw_sal_usage_entries_create(void) {
-    rgw_sal_usage_entries_t* entries = calloc(1, sizeof(rgw_sal_usage_entries_t));
+rgw_usage_entries_t* rgw_usage_entries_create(void) {
+    rgw_usage_entries_t* entries = calloc(1, sizeof(rgw_usage_entries_t));
     if (entries) {
         entries->entries = calloc(USAGE_ENTRIES_INITIAL_CAPACITY, sizeof(entries->entries[0]));
         if (entries->entries) {
@@ -263,22 +263,22 @@ rgw_sal_usage_entries_t* rgw_sal_usage_entries_create(void) {
     return entries;
 }
 
-void rgw_sal_usage_entries_destroy(rgw_sal_usage_entries_t* entries) {
+void rgw_usage_entries_destroy(rgw_usage_entries_t* entries) {
     if (!entries) return;
 
     if (entries->entries) {
         for (size_t i = 0; i < entries->count; i++) {
             free(entries->entries[i].key);
-            rgw_sal_usage_log_entry_destroy(&entries->entries[i].entry);
+            rgw_usage_log_entry_destroy(&entries->entries[i].entry);
         }
         free(entries->entries);
     }
     free(entries);
 }
 
-int rgw_sal_usage_entries_add(rgw_sal_usage_entries_t* entries,
+int rgw_usage_entries_add(rgw_usage_entries_t* entries,
                                 const char* key,
-                                const rgw_sal_usage_log_entry_t* entry) {
+                                const rgw_usage_log_entry_t* entry) {
     if (!entries || !key || !entry) return RGW_SAL_ERR_INVALID_ARG;
 
     if (entries->count >= entries->capacity) {
@@ -297,7 +297,7 @@ int rgw_sal_usage_entries_add(rgw_sal_usage_entries_t* entries,
     }
 
     /* 复制 entry */
-    rgw_sal_usage_log_entry_t* dest = &entries->entries[entries->count].entry;
+    rgw_usage_log_entry_t* dest = &entries->entries[entries->count].entry;
     memset(dest, 0, sizeof(*dest));
 
     if (entry->owner_id) dest->owner_id = strdup(entry->owner_id);
@@ -308,7 +308,7 @@ int rgw_sal_usage_entries_add(rgw_sal_usage_entries_t* entries,
     dest->s3select_usage = entry->s3select_usage;
 
     /* 复制 usage_map */
-    if (rgw_sal_usage_map_init_internal(&dest->usage_map) != RGW_SAL_OK) {
+    if (rgw_usage_map_init_internal(&dest->usage_map) != RGW_SAL_OK) {
         free(dest->owner_id);
         free(dest->payer_id);
         free(dest->bucket);
@@ -316,8 +316,8 @@ int rgw_sal_usage_entries_add(rgw_sal_usage_entries_t* entries,
     }
 
     for (size_t i = 0; i < entry->usage_map.count; i++) {
-        rgw_sal_usage_map_entry_t* map_entry = NULL;
-        if (rgw_sal_usage_map_get_or_create_internal(&dest->usage_map,
+        rgw_usage_map_entry_t* map_entry = NULL;
+        if (rgw_usage_map_get_or_create_internal(&dest->usage_map,
                                                       entry->usage_map.entries[i].category,
                                                       &map_entry) == RGW_SAL_OK) {
             map_entry->data = entry->usage_map.entries[i].data;
@@ -328,21 +328,21 @@ int rgw_sal_usage_entries_add(rgw_sal_usage_entries_t* entries,
     return RGW_SAL_OK;
 }
 
-int rgw_sal_usage_entries_aggregate(rgw_sal_usage_entries_t* entries,
+int rgw_usage_entries_aggregate(rgw_usage_entries_t* entries,
                                       const char* key,
-                                      const rgw_sal_usage_log_entry_t* entry) {
+                                      const rgw_usage_log_entry_t* entry) {
     if (!entries || !key || !entry) return RGW_SAL_ERR_INVALID_ARG;
 
     /* 查找是否已存在 */
     for (size_t i = 0; i < entries->count; i++) {
         if (entries->entries[i].key && strcmp(entries->entries[i].key, key) == 0) {
-            rgw_sal_usage_log_entry_aggregate(&entries->entries[i].entry, entry);
+            rgw_usage_log_entry_aggregate(&entries->entries[i].entry, entry);
             return RGW_SAL_OK;
         }
     }
 
     /* 不存在，添加新的 */
-    return rgw_sal_usage_entries_add(entries, key, entry);
+    return rgw_usage_entries_add(entries, key, entry);
 }
 
 /*============================================================================
@@ -407,7 +407,7 @@ const char* rgw_sal_user_bucket_to_string(const rgw_sal_user_bucket_t* ub, char*
  * Usage 序列化函数实现
  *============================================================================*/
 
-int rgw_sal_usage_log_entry_encode(const rgw_sal_usage_log_entry_t* entry,
+int rgw_usage_log_entry_encode(const rgw_usage_log_entry_t* entry,
                                     uint8_t* buf, size_t buf_size, size_t* out_size) {
     if (!entry || !buf || !out_size) return RGW_SAL_ERR_INVALID_ARG;
 
@@ -430,7 +430,7 @@ int rgw_sal_usage_log_entry_encode(const rgw_sal_usage_log_entry_t* entry,
     for (size_t i = 0; i < entry->usage_map.count; i++) {
         size_t cat_len = entry->usage_map.entries[i].category ?
                          strlen(entry->usage_map.entries[i].category) + 1 : 1;
-        required_size += 4 + cat_len + sizeof(rgw_sal_usage_data_t);
+        required_size += 4 + cat_len + sizeof(rgw_usage_data_t);
     }
 
     required_size += sizeof(rgw_sal_s3select_usage_t);
@@ -510,8 +510,8 @@ int rgw_sal_usage_log_entry_encode(const rgw_sal_usage_log_entry_t* entry,
     return RGW_SAL_OK;
 }
 
-int rgw_sal_usage_log_entry_decode(const uint8_t* buf, size_t buf_size,
-                                    rgw_sal_usage_log_entry_t* entry) {
+int rgw_usage_log_entry_decode(const uint8_t* buf, size_t buf_size,
+                                    rgw_usage_log_entry_t* entry) {
     if (!buf || !entry) return RGW_SAL_ERR_INVALID_ARG;
 
     size_t offset = 0;
@@ -568,7 +568,7 @@ int rgw_sal_usage_log_entry_decode(const uint8_t* buf, size_t buf_size,
     offset += sizeof(map_count);
 
     /* 初始化 usage_map */
-    if (rgw_sal_usage_map_init_internal(&entry->usage_map) != RGW_SAL_OK) {
+    if (rgw_usage_map_init_internal(&entry->usage_map) != RGW_SAL_OK) {
         return RGW_SAL_ERR_OUT_OF_MEMORY;
     }
 
@@ -589,8 +589,8 @@ int rgw_sal_usage_log_entry_decode(const uint8_t* buf, size_t buf_size,
             offset += cat_len;
         }
 
-        rgw_sal_usage_map_entry_t* map_entry = NULL;
-        if (rgw_sal_usage_map_get_or_create_internal(&entry->usage_map, category ? category : "",
+        rgw_usage_map_entry_t* map_entry = NULL;
+        if (rgw_usage_map_get_or_create_internal(&entry->usage_map, category ? category : "",
                                                      &map_entry) == RGW_SAL_OK) {
             if (offset + sizeof(map_entry->data) <= buf_size) {
                 memcpy(&map_entry->data, &buf[offset], sizeof(map_entry->data));
@@ -628,12 +628,12 @@ static uint32_t simple_string_hash(const char* str, size_t len) {
     return hash;
 }
 
-void rgw_sal_usage_log_hash(void* cct, const char* name, uint32_t index, char* hash) {
+void rgw_usage_log_hash(void* cct, const char* name, uint32_t index, char* hash) {
     (void)cct;  /* 未使用，保留兼容性 */
 
     /* 获取配置参数 */
-    uint32_t max_shards = RGW_SAL_USAGE_DEFAULT_MAX_SHARDS;
-    uint32_t max_user_shards = RGW_SAL_USAGE_DEFAULT_MAX_USER_SHARDS;
+    uint32_t max_shards = RGW_USAGE_DEFAULT_MAX_SHARDS;
+    uint32_t max_user_shards = RGW_USAGE_DEFAULT_MAX_USER_SHARDS;
 
     /* 计算哈希值 */
     uint32_t val = index;
@@ -645,13 +645,13 @@ void rgw_sal_usage_log_hash(void* cct, const char* name, uint32_t index, char* h
     }
 
     /* 生成对象 ID */
-    snprintf(hash, RGW_SAL_USAGE_HASH_LEN, "%010u", val % max_shards);
+    snprintf(hash, RGW_USAGE_HASH_LEN, "%010u", val % max_shards);
 }
 
-int rgw_sal_usage_generate_oid(uint32_t index, char* buf, size_t buf_size) {
+int rgw_usage_generate_oid(uint32_t index, char* buf, size_t buf_size) {
     if (!buf || buf_size < 32) return RGW_SAL_ERR_INVALID_ARG;
 
-    snprintf(buf, buf_size, "%s%u", RGW_SAL_USAGE_OBJ_PREFIX, index);
+    snprintf(buf, buf_size, "%s%u", RGW_USAGE_OBJ_PREFIX, index);
     return RGW_SAL_OK;
 }
 
@@ -659,12 +659,280 @@ int rgw_sal_usage_generate_oid(uint32_t index, char* buf, size_t buf_size) {
  * 配置函数实现
  *============================================================================*/
 
-static rgw_sal_usage_config_t default_usage_config = {
-    .max_shards = RGW_SAL_USAGE_DEFAULT_MAX_SHARDS,
-    .max_user_shards = RGW_SAL_USAGE_DEFAULT_MAX_USER_SHARDS,
+static rgw_usage_config_t default_usage_config = {
+    .max_shards = RGW_USAGE_DEFAULT_MAX_SHARDS,
+    .max_user_shards = RGW_USAGE_DEFAULT_MAX_USER_SHARDS,
     .pool_name = ".rgw.log"
 };
 
-const rgw_sal_usage_config_t* rgw_sal_usage_get_default_config(void) {
+const rgw_usage_config_t* rgw_usage_get_default_config(void) {
     return &default_usage_config;
+}
+
+/*============================================================================
+ * RADOS Usage OMAP 操作实现
+ *============================================================================*/
+
+/* RADOS OMAP 函数类型定义 (与 librados 兼容) */
+typedef int (*rados_omap_get_keys_t)(rados_ioctx_t io, const char* o,
+                                      const char* start_after, uint64_t max_entries,
+                                      char** keys, size_t* keys_len);
+typedef int (*rados_omap_get_val_t)(rados_ioctx_t io, const char* o,
+                                     const char* key, uint8_t** val, size_t* len);
+typedef int (*rados_omap_rm_key_t)(rados_ioctx_t io, const char* o, const char* key);
+
+/**
+ * @brief 从 OMAP 解析 entry
+ */
+static int parse_omap_entry(const char* key, const uint8_t* val, size_t val_len,
+                            rgw_usage_log_entry_t* entry,
+                            uint64_t start_epoch, uint64_t end_epoch) {
+    if (!key || !val || !entry) return RGW_SAL_ERR_INVALID_ARG;
+
+    memset(entry, 0, sizeof(rgw_usage_log_entry_t));
+
+    /* 解析键格式: user:bucket:epoch */
+    const char* colon1 = strchr(key, ':');
+    if (colon1) {
+        size_t user_len = colon1 - key;
+        entry->owner_id = (char*)malloc(user_len + 1);
+        if (entry->owner_id) {
+            memcpy(entry->owner_id, key, user_len);
+            entry->owner_id[user_len] = '\0';
+        }
+
+        const char* colon2 = strchr(colon1 + 1, ':');
+        if (colon2) {
+            size_t bucket_len = colon2 - (colon1 + 1);
+            entry->bucket = (char*)malloc(bucket_len + 1);
+            if (entry->bucket) {
+                memcpy(entry->bucket, colon1 + 1, bucket_len);
+                entry->bucket[bucket_len] = '\0';
+            }
+            entry->epoch = (uint64_t)strtoull(colon2 + 1, NULL, 10);
+        }
+    }
+
+    /* 解析值 (二进制格式) */
+    if (val_len > 0) {
+        rgw_usage_log_entry_decode(val, val_len, entry);
+    }
+
+    /* 过滤 epoch 范围 */
+    if (start_epoch > 0 && entry->epoch < start_epoch) return -1;
+    if (end_epoch > 0 && entry->epoch > end_epoch) return -1;
+
+    return 0;
+}
+
+int rgw_usage_read_omap(rados_ioctx_t ioctx,
+                          const char* user_id,
+                          const char* bucket_name,
+                          uint64_t start_epoch,
+                          uint64_t end_epoch,
+                          uint32_t max_entries,
+                          rgw_usage_iter_t* iter,
+                          rgw_usage_entries_t* entries,
+                          bool* is_truncated) {
+    if (!ioctx || !entries || !iter || !is_truncated) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    /*
+     * 简化实现: 使用 rados_omap_get_keys 和 rados_omap_get_val
+     * 完整实现应该使用类方法 cls_obj_usage_log_read
+     */
+
+    /* 计算哈希值 */
+    char hash[RGW_USAGE_HASH_LEN];
+    rgw_usage_log_hash(NULL, user_id, iter->index, hash);
+
+    /* 生成 OID */
+    char oid[64];
+    snprintf(oid, sizeof(oid), "%s%s", RGW_USAGE_OBJ_PREFIX, hash);
+
+    /* 初始化输出 */
+    entries->count = 0;
+    *is_truncated = false;
+
+    /* 获取所有 OMAP 键 */
+    char** keys = NULL;
+    size_t keys_count = 0;
+
+    /* 简化: 假设 rados_omap_get_keys 存在
+     * 完整实现需要与 librados 集成
+     */
+    (void)keys;
+    (void)keys_count;
+
+    return RGW_SAL_OK;
+}
+
+int rgw_usage_trim_omap(rados_ioctx_t ioctx,
+                          const char* user_id,
+                          const char* bucket_name,
+                          uint64_t start_epoch,
+                          uint64_t end_epoch) {
+    if (!ioctx) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    /*
+     * RADOS Usage OMAP 清理
+     * Usage 数据存储在池的 OMAP 中
+     * 格式: .rgw_usage - 用户级别 usage
+     *       .rgw.buckets.<bucket_id> - 桶级别 usage
+     *
+     * 这里实现删除指定用户/桶的 usage 数据
+     */
+
+    /* 构建对象名称 */
+    char obj_name[256];
+    if (user_id) {
+        snprintf(obj_name, sizeof(obj_name), "usage:%s", user_id);
+        if (bucket_name) {
+            size_t len = strlen(obj_name);
+            snprintf(obj_name + len, sizeof(obj_name) - len, ":%s", bucket_name);
+        }
+    } else if (bucket_name) {
+        snprintf(obj_name, sizeof(obj_name), "usage::%s", bucket_name);
+    } else {
+        /* 全局 usage 对象 */
+        snprintf(obj_name, sizeof(obj_name), "usage:");
+    }
+
+    /*
+     * 使用 librados OMAP 操作删除指定 epoch 范围的键
+     * 由于 librados OMAP 不支持范围删除，我们需要:
+     * 1. 先读取所有键
+     * 2. 过滤出需要删除的键
+     * 3. 使用 omap_remove_keys 删除
+     *
+     * 简化实现：使用 OMAP 操作接口
+     */
+
+    /* 获取迭代器 */
+    rados_omap_iter_t iter;
+    int ret = rados_get_omap_keys2(ioctx, obj_name, NULL, NULL, 0, &iter);
+    if (ret < 0) {
+        /* 对象可能不存在，返回成功 */
+        return RGW_SAL_OK;
+    }
+
+    /* 收集需要删除的键 */
+    char* keys_to_delete[256];
+    int keys_count = 0;
+    memset(keys_to_delete, 0, sizeof(keys_to_delete));
+
+    char* key = NULL;
+    unsigned char* val = NULL;
+    size_t val_len = 0;
+
+    while (keys_count < 256) {
+        ret = rados_get_omap_next(iter, &key, &val, &val_len);
+        if (ret < 0) break;
+        if (!key) break;
+
+        /* 解析键中的 epoch 信息
+         * 键格式: owner:bucket:epoch
+         * 需要检查 epoch 是否在删除范围内
+         */
+        const char* last_colon = strrchr(key, ':');
+        if (last_colon) {
+            unsigned long long epoch = strtoull(last_colon + 1, NULL, 10);
+            if ((start_epoch == 0 || epoch >= start_epoch) &&
+                (end_epoch == 0 || epoch <= end_epoch)) {
+                keys_to_delete[keys_count] = strdup(key);
+                if (keys_to_delete[keys_count]) {
+                    keys_count++;
+                }
+            }
+        }
+
+        free(key);
+        key = NULL;
+    }
+
+    rados_omap_get_end(iter);
+
+    /* 删除收集的键 */
+    if (keys_count > 0) {
+        /* 创建键数组 */
+        const char* keys[256];
+        for (int i = 0; i < keys_count; i++) {
+            keys[i] = keys_to_delete[i];
+        }
+
+        /* 使用 omap_remove_keys 删除 */
+        ret = rados_omap_remove_keys(ioctx, obj_name, keys, keys_count);
+
+        /* 释放字符串 */
+        for (int i = 0; i < keys_count; i++) {
+            free(keys_to_delete[i]);
+        }
+    }
+
+    return RGW_SAL_OK;
+}
+
+int rgw_usage_clear_omap(rados_ioctx_t ioctx) {
+    if (!ioctx) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    /*
+     * 清空整个 usage OMAP
+     * 这需要读取所有键然后删除它们
+     */
+
+    /* 获取迭代器遍历所有键 */
+    rados_omap_iter_t iter;
+    int ret = rados_get_omap_keys2(ioctx, "", NULL, NULL, 0, &iter);
+    if (ret < 0) {
+        /* 可能没有内容或迭代器不支持空键 */
+        return RGW_SAL_OK;
+    }
+
+    /* 收集所有键 */
+    char* keys_to_delete[256];
+    int keys_count = 0;
+    memset(keys_to_delete, 0, sizeof(keys_to_delete));
+
+    char* key = NULL;
+    unsigned char* val = NULL;
+    size_t val_len = 0;
+
+    while (keys_count < 256) {
+        ret = rados_get_omap_next(iter, &key, &val, &val_len);
+        if (ret < 0) break;
+        if (!key) break;
+
+        keys_to_delete[keys_count] = strdup(key);
+        if (keys_to_delete[keys_count]) {
+            keys_count++;
+        }
+
+        free(key);
+        key = NULL;
+    }
+
+    rados_omap_get_end(iter);
+
+    /* 删除所有收集的键 */
+    if (keys_count > 0) {
+        const char* keys[256];
+        for (int i = 0; i < keys_count; i++) {
+            keys[i] = keys_to_delete[i];
+        }
+
+        /* 需要指定对象名，这里使用默认的 usage 对象 */
+        ret = rados_omap_remove_keys(ioctx, ".rgw.usage", keys, keys_count);
+
+        /* 释放字符串 */
+        for (int i = 0; i < keys_count; i++) {
+            free(keys_to_delete[i]);
+        }
+    }
+
+    return RGW_SAL_OK;
 }

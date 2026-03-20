@@ -117,6 +117,20 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
+tests/CMakeFiles/test_basic.dir/rule:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_basic.dir/rule
+.PHONY : tests/CMakeFiles/test_basic.dir/rule
+
+# Convenience name for target.
+test_basic: tests/CMakeFiles/test_basic.dir/rule
+.PHONY : test_basic
+
+# fast build rule for target.
+test_basic/fast:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/build
+.PHONY : test_basic/fast
+
+# Convenience name for target.
 tests/CMakeFiles/test_rados_driver.dir/rule:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_rados_driver.dir/rule
 .PHONY : tests/CMakeFiles/test_rados_driver.dir/rule
@@ -130,12 +144,42 @@ test_rados_driver/fast:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/build
 .PHONY : test_rados_driver/fast
 
+# Convenience name for target.
+tests/CMakeFiles/test_dbstore_driver.dir/rule:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_dbstore_driver.dir/rule
+.PHONY : tests/CMakeFiles/test_dbstore_driver.dir/rule
+
+# Convenience name for target.
+test_dbstore_driver: tests/CMakeFiles/test_dbstore_driver.dir/rule
+.PHONY : test_dbstore_driver
+
+# fast build rule for target.
+test_dbstore_driver/fast:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/build
+.PHONY : test_dbstore_driver/fast
+
+# Convenience name for target.
+tests/CMakeFiles/test_integration.dir/rule:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_integration.dir/rule
+.PHONY : tests/CMakeFiles/test_integration.dir/rule
+
+# Convenience name for target.
+test_integration: tests/CMakeFiles/test_integration.dir/rule
+.PHONY : test_integration
+
+# fast build rule for target.
+test_integration/fast:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/build
+.PHONY : test_integration/fast
+
 __/src/core/rgw_sal.o: __/src/core/rgw_sal.c.o
 .PHONY : __/src/core/rgw_sal.o
 
 # target to build an object file
 __/src/core/rgw_sal.c.o:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/core/rgw_sal.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/core/rgw_sal.c.o
 .PHONY : __/src/core/rgw_sal.c.o
 
 __/src/core/rgw_sal.i: __/src/core/rgw_sal.c.i
@@ -144,6 +188,8 @@ __/src/core/rgw_sal.i: __/src/core/rgw_sal.c.i
 # target to preprocess a source file
 __/src/core/rgw_sal.c.i:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/core/rgw_sal.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/core/rgw_sal.c.i
 .PHONY : __/src/core/rgw_sal.c.i
 
 __/src/core/rgw_sal.s: __/src/core/rgw_sal.c.s
@@ -152,6 +198,8 @@ __/src/core/rgw_sal.s: __/src/core/rgw_sal.c.s
 # target to generate assembly for a file
 __/src/core/rgw_sal.c.s:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/core/rgw_sal.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/core/rgw_sal.c.s
 .PHONY : __/src/core/rgw_sal.c.s
 
 __/src/core/rgw_sal_types.o: __/src/core/rgw_sal_types.c.o
@@ -159,7 +207,10 @@ __/src/core/rgw_sal_types.o: __/src/core/rgw_sal_types.c.o
 
 # target to build an object file
 __/src/core/rgw_sal_types.c.o:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/__/src/core/rgw_sal_types.c.o
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/core/rgw_sal_types.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/core/rgw_sal_types.c.o
 .PHONY : __/src/core/rgw_sal_types.c.o
 
 __/src/core/rgw_sal_types.i: __/src/core/rgw_sal_types.c.i
@@ -167,7 +218,10 @@ __/src/core/rgw_sal_types.i: __/src/core/rgw_sal_types.c.i
 
 # target to preprocess a source file
 __/src/core/rgw_sal_types.c.i:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/__/src/core/rgw_sal_types.c.i
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/core/rgw_sal_types.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/core/rgw_sal_types.c.i
 .PHONY : __/src/core/rgw_sal_types.c.i
 
 __/src/core/rgw_sal_types.s: __/src/core/rgw_sal_types.c.s
@@ -175,7 +229,10 @@ __/src/core/rgw_sal_types.s: __/src/core/rgw_sal_types.c.s
 
 # target to generate assembly for a file
 __/src/core/rgw_sal_types.c.s:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/__/src/core/rgw_sal_types.c.s
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/core/rgw_sal_types.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/core/rgw_sal_types.c.s
 .PHONY : __/src/core/rgw_sal_types.c.s
 
 __/src/drivers/rgw_sal_dbstore.o: __/src/drivers/rgw_sal_dbstore.c.o
@@ -183,7 +240,8 @@ __/src/drivers/rgw_sal_dbstore.o: __/src/drivers/rgw_sal_dbstore.c.o
 
 # target to build an object file
 __/src/drivers/rgw_sal_dbstore.c.o:
-	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_dbstore.c.o
 .PHONY : __/src/drivers/rgw_sal_dbstore.c.o
 
 __/src/drivers/rgw_sal_dbstore.i: __/src/drivers/rgw_sal_dbstore.c.i
@@ -191,7 +249,8 @@ __/src/drivers/rgw_sal_dbstore.i: __/src/drivers/rgw_sal_dbstore.c.i
 
 # target to preprocess a source file
 __/src/drivers/rgw_sal_dbstore.c.i:
-	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/drivers/rgw_sal_dbstore.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_dbstore.c.i
 .PHONY : __/src/drivers/rgw_sal_dbstore.c.i
 
 __/src/drivers/rgw_sal_dbstore.s: __/src/drivers/rgw_sal_dbstore.c.s
@@ -199,7 +258,8 @@ __/src/drivers/rgw_sal_dbstore.s: __/src/drivers/rgw_sal_dbstore.c.s
 
 # target to generate assembly for a file
 __/src/drivers/rgw_sal_dbstore.c.s:
-	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/drivers/rgw_sal_dbstore.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_dbstore.c.s
 .PHONY : __/src/drivers/rgw_sal_dbstore.c.s
 
 __/src/drivers/rgw_sal_rados.o: __/src/drivers/rgw_sal_rados.c.o
@@ -208,6 +268,7 @@ __/src/drivers/rgw_sal_rados.o: __/src/drivers/rgw_sal_rados.c.o
 # target to build an object file
 __/src/drivers/rgw_sal_rados.c.o:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_rados.c.o
 .PHONY : __/src/drivers/rgw_sal_rados.c.o
 
 __/src/drivers/rgw_sal_rados.i: __/src/drivers/rgw_sal_rados.c.i
@@ -216,6 +277,7 @@ __/src/drivers/rgw_sal_rados.i: __/src/drivers/rgw_sal_rados.c.i
 # target to preprocess a source file
 __/src/drivers/rgw_sal_rados.c.i:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_rados.c.i
 .PHONY : __/src/drivers/rgw_sal_rados.c.i
 
 __/src/drivers/rgw_sal_rados.s: __/src/drivers/rgw_sal_rados.c.s
@@ -224,7 +286,110 @@ __/src/drivers/rgw_sal_rados.s: __/src/drivers/rgw_sal_rados.c.s
 # target to generate assembly for a file
 __/src/drivers/rgw_sal_rados.c.s:
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_rados.c.s
 .PHONY : __/src/drivers/rgw_sal_rados.c.s
+
+__/src/rgw_sal_usage.o: __/src/rgw_sal_usage.c.o
+.PHONY : __/src/rgw_sal_usage.o
+
+# target to build an object file
+__/src/rgw_sal_usage.c.o:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/rgw_sal_usage.c.o
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/rgw_sal_usage.c.o
+.PHONY : __/src/rgw_sal_usage.c.o
+
+__/src/rgw_sal_usage.i: __/src/rgw_sal_usage.c.i
+.PHONY : __/src/rgw_sal_usage.i
+
+# target to preprocess a source file
+__/src/rgw_sal_usage.c.i:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/rgw_sal_usage.c.i
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/rgw_sal_usage.c.i
+.PHONY : __/src/rgw_sal_usage.c.i
+
+__/src/rgw_sal_usage.s: __/src/rgw_sal_usage.c.s
+.PHONY : __/src/rgw_sal_usage.s
+
+# target to generate assembly for a file
+__/src/rgw_sal_usage.c.s:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/__/src/rgw_sal_usage.c.s
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/__/src/rgw_sal_usage.c.s
+.PHONY : __/src/rgw_sal_usage.c.s
+
+test_basic.o: test_basic.c.o
+.PHONY : test_basic.o
+
+# target to build an object file
+test_basic.c.o:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/test_basic.c.o
+.PHONY : test_basic.c.o
+
+test_basic.i: test_basic.c.i
+.PHONY : test_basic.i
+
+# target to preprocess a source file
+test_basic.c.i:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/test_basic.c.i
+.PHONY : test_basic.c.i
+
+test_basic.s: test_basic.c.s
+.PHONY : test_basic.s
+
+# target to generate assembly for a file
+test_basic.c.s:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/test_basic.c.s
+.PHONY : test_basic.c.s
+
+test_dbstore_driver.o: test_dbstore_driver.c.o
+.PHONY : test_dbstore_driver.o
+
+# target to build an object file
+test_dbstore_driver.c.o:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/test_dbstore_driver.c.o
+.PHONY : test_dbstore_driver.c.o
+
+test_dbstore_driver.i: test_dbstore_driver.c.i
+.PHONY : test_dbstore_driver.i
+
+# target to preprocess a source file
+test_dbstore_driver.c.i:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/test_dbstore_driver.c.i
+.PHONY : test_dbstore_driver.c.i
+
+test_dbstore_driver.s: test_dbstore_driver.c.s
+.PHONY : test_dbstore_driver.s
+
+# target to generate assembly for a file
+test_dbstore_driver.c.s:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/test_dbstore_driver.c.s
+.PHONY : test_dbstore_driver.c.s
+
+test_integration.o: test_integration.c.o
+.PHONY : test_integration.o
+
+# target to build an object file
+test_integration.c.o:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/test_integration.c.o
+.PHONY : test_integration.c.o
+
+test_integration.i: test_integration.c.i
+.PHONY : test_integration.i
+
+# target to preprocess a source file
+test_integration.c.i:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/test_integration.c.i
+.PHONY : test_integration.c.i
+
+test_integration.s: test_integration.c.s
+.PHONY : test_integration.s
+
+# target to generate assembly for a file
+test_integration.c.s:
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/test_integration.c.s
+.PHONY : test_integration.c.s
 
 test_rados_driver.o: test_rados_driver.c.o
 .PHONY : test_rados_driver.o
@@ -258,6 +423,9 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... test_basic"
+	@echo "... test_dbstore_driver"
+	@echo "... test_integration"
 	@echo "... test_rados_driver"
 	@echo "... __/src/core/rgw_sal.o"
 	@echo "... __/src/core/rgw_sal.i"
@@ -271,6 +439,18 @@ help:
 	@echo "... __/src/drivers/rgw_sal_rados.o"
 	@echo "... __/src/drivers/rgw_sal_rados.i"
 	@echo "... __/src/drivers/rgw_sal_rados.s"
+	@echo "... __/src/rgw_sal_usage.o"
+	@echo "... __/src/rgw_sal_usage.i"
+	@echo "... __/src/rgw_sal_usage.s"
+	@echo "... test_basic.o"
+	@echo "... test_basic.i"
+	@echo "... test_basic.s"
+	@echo "... test_dbstore_driver.o"
+	@echo "... test_dbstore_driver.i"
+	@echo "... test_dbstore_driver.s"
+	@echo "... test_integration.o"
+	@echo "... test_integration.i"
+	@echo "... test_integration.s"
 	@echo "... test_rados_driver.o"
 	@echo "... test_rados_driver.i"
 	@echo "... test_rados_driver.s"

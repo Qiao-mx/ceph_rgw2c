@@ -10,8 +10,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/core/rgw_sal.c" "tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.o" "gcc" "tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.o.d"
   "/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/core/rgw_sal_types.c" "tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o" "gcc" "tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o.d"
-  "/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c" "tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o" "gcc" "tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o.d"
   "/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_rados.c" "tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o" "gcc" "tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o.d"
+  "/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/rgw_sal_usage.c" "tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o" "gcc" "tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o.d"
   "/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/test_rados_driver.c" "tests/CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o" "gcc" "tests/CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o.d"
   )
 

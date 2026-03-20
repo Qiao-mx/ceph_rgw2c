@@ -1,0 +1,112 @@
+@echo off
+REM SAL C Test Runner Script for Windows
+
+setlocal enabledelayedexpansion
+
+set BUILD_DIR=@CMAKE_CURRENT_BINARY_DIR@
+set SRC_DIR=@CMAKE_CURRENT_SOURCE_DIR@
+
+set TOTAL_TESTS=0
+set PASSED_TESTS=0
+set FAILED_TESTS=0
+
+echo ========================================
+echo SAL C Test Suite
+echo ========================================
+echo Build Directory: %BUILD_DIR%
+echo Source Directory: %SRC_DIR%
+echo.
+
+cd /d "%BUILD_DIR%"
+
+REM Run test_basic
+if exist "test_basic.exe" (
+    set /a TOTAL_TESTS+=1
+    echo.
+    echo Running: test_basic (Core Types)
+    echo -------------------------------------------
+    call test_basic.exe
+    if errorlevel 1 (
+        echo [ERROR] test_basic failed
+        set /a FAILED_TESTS+=1
+    ) else (
+        echo [SUCCESS] test_basic
+        set /a PASSED_TESTS+=1
+    )
+) else (
+    echo [WARNING] test_basic not found, skipping...
+)
+
+REM Run test_rados_driver
+if exist "test_rados_driver.exe" (
+    set /a TOTAL_TESTS+=1
+    echo.
+    echo Running: test_rados_driver (RADOS Driver)
+    echo -------------------------------------------
+    call test_rados_driver.exe
+    if errorlevel 1 (
+        echo [ERROR] test_rados_driver failed
+        set /a FAILED_TESTS+=1
+    ) else (
+        echo [SUCCESS] test_rados_driver
+        set /a PASSED_TESTS+=1
+    )
+) else (
+    echo [WARNING] test_rados_driver not found, skipping...
+)
+
+REM Run test_dbstore_driver
+if exist "test_dbstore_driver.exe" (
+    set /a TOTAL_TESTS+=1
+    echo.
+    echo Running: test_dbstore_driver (DBStore Driver)
+    echo -------------------------------------------
+    call test_dbstore_driver.exe
+    if errorlevel 1 (
+        echo [ERROR] test_dbstore_driver failed
+        set /a FAILED_TESTS+=1
+    ) else (
+        echo [SUCCESS] test_dbstore_driver
+        set /a PASSED_TESTS+=1
+    )
+) else (
+    echo [WARNING] test_dbstore_driver not found, skipping...
+)
+
+REM Run test_integration
+if exist "test_integration.exe" (
+    set /a TOTAL_TESTS+=1
+    echo.
+    echo Running: test_integration (Comprehensive)
+    echo -------------------------------------------
+    call test_integration.exe
+    if errorlevel 1 (
+        echo [ERROR] test_integration failed
+        set /a FAILED_TESTS+=1
+    ) else (
+        echo [SUCCESS] test_integration
+        set /a PASSED_TESTS+=1
+    )
+) else (
+    echo [WARNING] test_integration not found, skipping...
+)
+
+REM Summary
+echo.
+echo ========================================
+echo Test Summary
+echo ========================================
+echo Total Tests:  %TOTAL_TESTS%
+echo Passed:       %PASSED_TESTS%
+echo Failed:       %FAILED_TESTS%
+echo.
+
+if %FAILED_TESTS% equ 0 (
+    echo [SUCCESS] All tests passed!
+    exit /b 0
+) else (
+    echo [ERROR] %FAILED_TESTS% test(s) failed!
+    exit /b 1
+)
+
+endlocal

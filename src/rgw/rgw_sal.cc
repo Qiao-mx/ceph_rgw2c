@@ -38,6 +38,10 @@
 #include "driver/d4n/rgw_sal_d4n.h" 
 #endif
 
+#ifdef WITH_RGW_SAL_C
+#include "rgw_sal_c_wrapper.h"
+#endif
+
 #ifdef WITH_RADOSGW_MOTR
 #include "driver/motr/rgw_sal_motr.h"
 #endif
@@ -66,6 +70,10 @@ extern rgw::sal::Driver* newPOSIXDriver(rgw::sal::Driver* next);
 extern rgw::sal::Driver* newBaseFilter(rgw::sal::Driver* next);
 #ifdef WITH_RADOSGW_D4N
 extern rgw::sal::Driver* newD4NFilter(rgw::sal::Driver* next, boost::asio::io_context& io_context);
+#endif
+
+#ifdef WITH_RGW_SAL_C
+extern rgw::sal::Driver* newSalCDriver(CephContext* cct, const std::string& type);
 #endif
 }
 
@@ -183,6 +191,28 @@ rgw::sal::Driver* DriverManager::init_storage_provider(const DoutPrefixProvider*
       delete driver;
       return nullptr;
     }
+  }
+#endif
+
+#ifdef WITH_RGW_SAL_C
+  else if (cfg.store_name.compare("c_rados") == 0 ||
+           cfg.store_name.compare("c_dbstore") == 0 ||
+           cfg.store_name.compare("c_posix") == 0) {
+    std::string c_driver_type;
+    if (cfg.store_name.compare("c_rados") == 0) {
+      c_driver_type = "rados";
+    } else if (cfg.store_name.compare("c_dbstore") == 0) {
+      c_driver_type = "dbstore";
+    } else if (cfg.store_name.compare("c_posix") == 0) {
+      c_driver_type = "posix";
+    }
+
+    driver = newSalCDriver(cct, c_driver_type);
+    if (driver == nullptr) {
+      ldpp_dout(dpp, 0) << "newSalCDriver(" << c_driver_type << ") failed!" << dendl;
+      return nullptr;
+    }
+    ldpp_dout(dpp, 1) << "SAL C driver initialized: " << c_driver_type << dendl;
   }
 #endif
 
@@ -371,6 +401,13 @@ DriverManager::Config DriverManager::get_config(bool admin, CephContext* cct)
 #ifdef WITH_RADOSGW_DAOS
   else if (config_store == "daos") {
     cfg.store_name = "daos";
+  }
+#endif
+
+#ifdef WITH_RGW_SAL_C
+  else if (config_store == "c_rados" || config_store == "c_dbstore" || config_store == "c_posix") {
+    cfg.store_name = config_store;
+    lsubdout(cct, rgw, 1) << "SAL C driver requested: " << config_store << dendl;
   }
 #endif
 

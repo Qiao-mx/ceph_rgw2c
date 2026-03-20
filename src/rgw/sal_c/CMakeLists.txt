@@ -14,6 +14,10 @@ set(RGW_SAL_C_INCLUDE_DIRS
 set(RGW_SAL_C_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_sal_types.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_sal.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_account_serde.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_group_serde.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_oidc_serde.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgw_sal_usage.c
 )
 
 # SAL C 接口驱动源文件

@@ -111,10 +111,24 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.s"
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/core/rgw_sal.c -o CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.s
 
+tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o: tests/CMakeFiles/test_rados_driver.dir/flags.make
+tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o: /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/rgw_sal_usage.c
+tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o: tests/CMakeFiles/test_rados_driver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o"
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o -MF CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o.d -o CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o -c /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/rgw_sal_usage.c
+
+tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.i"
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/rgw_sal_usage.c > CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.i
+
+tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.s"
+	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/rgw_sal_usage.c -o CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.s
+
 tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o: tests/CMakeFiles/test_rados_driver.dir/flags.make
 tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o: /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_rados.c
 tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o: tests/CMakeFiles/test_rados_driver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o"
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o -MF CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o.d -o CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o -c /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_rados.c
 
 tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.i: cmake_force
@@ -125,27 +139,13 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.s: cmake_f
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.s"
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_rados.c -o CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.s
 
-tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o: tests/CMakeFiles/test_rados_driver.dir/flags.make
-tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o: /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c
-tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o: tests/CMakeFiles/test_rados_driver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o"
-	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o -MF CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o.d -o CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o -c /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c
-
-tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.i"
-	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c > CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.i
-
-tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.s"
-	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c -o CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.s
-
 # Object files for target test_rados_driver
 test_rados_driver_OBJECTS = \
 "CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o" \
 "CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o" \
 "CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.o" \
-"CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o" \
-"CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o"
+"CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o" \
+"CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o"
 
 # External object files for target test_rados_driver
 test_rados_driver_EXTERNAL_OBJECTS =
@@ -153,9 +153,10 @@ test_rados_driver_EXTERNAL_OBJECTS =
 tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o
 tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o
 tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.o
+tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o
 tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o
-tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_dbstore.c.o
 tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/build.make
+tests/test_rados_driver: /lib/x86_64-linux-gnu/librados.so
 tests/test_rados_driver: tests/CMakeFiles/test_rados_driver.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking C executable test_rados_driver"
 	cd /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/build/tests && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_rados_driver.dir/link.txt --verbose=$(VERBOSE)

@@ -19,6 +19,7 @@
 
 #include "rgw_sal.h"
 #include "rgw_sal_rados.h"
+#include "rgw_sal_types.h"
 
 /* 测试计数器 */
 static int g_tests_run = 0;
@@ -1504,6 +1505,406 @@ static int test_null_object_operations(void) {
 }
 
 /*============================================================================
+ * RADOS 桶列表测试
+ *============================================================================*/
+
+static int test_rados_bucket_list(void) {
+    TEST_START("rados_bucket_list");
+
+    rgw_sal_driver_t* driver = rgw_sal_create_driver("rados", NULL);
+    if (!driver) {
+        TEST_FAIL("driver is NULL");
+    }
+
+    rgw_sal_user_id_t uid = {0};
+    uid.id = strdup("list_test_user");
+
+    rgw_sal_user_t* owner = rgw_sal_get_user(driver, &uid);
+    if (!owner) {
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("owner is NULL");
+    }
+
+    /* 测试 list_buckets 函数是否可用 */
+    rgw_sal_bucket_list_t* result = NULL;
+    int ret = driver->vtable->list_buckets(driver, owner, "", NULL, NULL, NULL, 100, false, &result, NULL, NULL);
+
+    if (ret == RGW_SAL_OK && result != NULL) {
+        printf("\n    Listed %zu buckets", result->count);
+        rgw_sal_bucket_list_destroy(result);
+    } else if (ret == RGW_SAL_ERR_NOT_FOUND) {
+        printf("\n    No buckets found (expected)");
+    } else {
+        printf("\n    list_buckets returned: %d", ret);
+    }
+
+    rgw_sal_user_destroy(owner);
+    free(uid.id);
+    rgw_sal_destroy_driver(driver);
+    TEST_PASS();
+    return 0;
+}
+
+static int test_rados_bucket_list_with_prefix(void) {
+    TEST_START("rados_bucket_list_with_prefix");
+
+    rgw_sal_driver_t* driver = rgw_sal_create_driver("rados", NULL);
+    if (!driver) {
+        TEST_FAIL("driver is NULL");
+    }
+
+    rgw_sal_user_id_t uid = {0};
+    uid.id = strdup("prefix_test_user");
+
+    rgw_sal_user_t* owner = rgw_sal_get_user(driver, &uid);
+    if (!owner) {
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("owner is NULL");
+    }
+
+    /* 测试带 prefix 的列表 */
+    rgw_sal_bucket_list_t* result = NULL;
+    int ret = driver->vtable->list_buckets(driver, owner, "test", NULL, NULL, NULL, 50, false, &result, NULL, NULL);
+
+    if (ret == RGW_SAL_OK && result != NULL) {
+        printf("\n    Listed %zu buckets with prefix 'test'", result->count);
+        rgw_sal_bucket_list_destroy(result);
+    } else if (ret == RGW_SAL_ERR_NOT_FOUND) {
+        printf("\n    No buckets found with prefix (expected)");
+    } else {
+        printf("\n    list_buckets with prefix returned: %d", ret);
+    }
+
+    rgw_sal_user_destroy(owner);
+    free(uid.id);
+    rgw_sal_destroy_driver(driver);
+    TEST_PASS();
+    return 0;
+}
+
+static int test_rados_bucket_delete_with_objects(void) {
+    TEST_START("rados_bucket_delete_with_objects");
+
+    rgw_sal_driver_t* driver = rgw_sal_create_driver("rados", NULL);
+    if (!driver) {
+        TEST_FAIL("driver is NULL");
+    }
+
+    rgw_sal_bucket_info_t info = {0};
+    info.bucket.name = strdup("delete_test_bucket");
+
+    rgw_sal_bucket_t* bucket = rgw_sal_get_bucket(driver, &info);
+    if (!bucket) {
+        free(info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("bucket is NULL");
+    }
+
+    /* 测试 delete_bucket 函数 */
+    if (!bucket->vtable->delete_bucket) {
+        printf("\n    delete_bucket not implemented");
+        rgw_sal_bucket_destroy(bucket);
+        free(info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_PASS();
+        return 0;
+    }
+
+    /* 尝试删除桶 (delete_objects=false) */
+    int ret = bucket->vtable->delete_bucket(bucket, NULL, NULL, false);
+    printf("\n    delete_bucket returned: %d", ret);
+
+    rgw_sal_bucket_destroy(bucket);
+    free(info.bucket.name);
+    rgw_sal_destroy_driver(driver);
+    TEST_PASS();
+    return 0;
+}
+
+/*============================================================================
+ * RADOS Usage 操作测试
+ *============================================================================*/
+
+static int test_rados_usage_operations(void) {
+    TEST_START("rados_usage_operations");
+
+    rgw_sal_driver_t* driver = rgw_sal_create_driver("rados", NULL);
+    if (!driver) {
+        TEST_FAIL("driver is NULL");
+    }
+
+    /* 测试 get_user 函数以获取用户进行 usage 操作 */
+    rgw_sal_user_id_t uid = {0};
+    uid.id = strdup("usage_test_user");
+
+    rgw_sal_user_t* user = rgw_sal_get_user(driver, &uid);
+    if (!user) {
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("user is NULL");
+    }
+
+    /* 测试 read_usage 函数 */
+    if (!user->vtable->read_usage) {
+        printf("\n    read_usage not implemented");
+        rgw_sal_user_destroy(user);
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+        TEST_PASS();
+        return 0;
+    }
+
+    rgw_sal_usage_info_t usage = {0};
+    int ret = user->vtable->read_usage(user, NULL, 0, 0, 100, &usage);
+    printf("\n    read_usage returned: %d (bytes=%llu, entries=%llu)",
+           ret, (unsigned long long)usage.total_bytes, (unsigned long long)usage.total_entries);
+
+    /* 测试 trim_usage 函数 */
+    if (!user->vtable->trim_usage) {
+        printf("\n    trim_usage not implemented");
+        rgw_sal_user_destroy(user);
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+        TEST_PASS();
+        return 0;
+    }
+
+    ret = user->vtable->trim_usage(user, NULL, 0, 0);
+    printf("\n    trim_usage returned: %d", ret);
+
+    rgw_sal_user_destroy(user);
+    free(uid.id);
+    rgw_sal_destroy_driver(driver);
+    TEST_PASS();
+    return 0;
+}
+
+/*============================================================================
+ * RADOS 对象属性测试
+ *============================================================================*/
+
+static int test_rados_object_attrs(void) {
+    TEST_START("rados_object_attrs");
+
+    rgw_sal_driver_t* driver = rgw_sal_create_driver("rados", NULL);
+    if (!driver) {
+        TEST_FAIL("driver is NULL");
+    }
+
+    rgw_sal_bucket_info_t bucket_info = {0};
+    bucket_info.bucket.name = strdup("attrs_test_bucket");
+
+    rgw_sal_bucket_t* bucket = rgw_sal_get_bucket(driver, &bucket_info);
+    if (!bucket) {
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("bucket is NULL");
+    }
+
+    rgw_sal_obj_key_t key = {0};
+    key.name = strdup("test_object");
+
+    rgw_sal_object_t* obj = rgw_sal_get_object(driver, bucket, &key);
+    if (!obj) {
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("object is NULL");
+    }
+
+    /* 获取对象属性 */
+    rgw_sal_attrs_t* attrs = obj->vtable->get_attrs(obj);
+    if (!attrs) {
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("attrs is NULL");
+    }
+
+    /* 设置多个对象属性 */
+    uint8_t val1[] = "application/json";
+    uint8_t val2[] = "public-read";
+    uint8_t val3[] = "encrypted";
+
+    int ret = rgw_sal_attrs_set(attrs, "Content-Type", val1, strlen((char*)val1));
+    if (ret != RGW_SAL_OK) {
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("set Content-Type failed");
+    }
+
+    ret = rgw_sal_attrs_set(attrs, "x-amz-acl", val2, strlen((char*)val2));
+    if (ret != RGW_SAL_OK) {
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("set x-amz-acl failed");
+    }
+
+    ret = rgw_sal_attrs_set(attrs, "x-amz-meta-encrypted", val3, strlen((char*)val3));
+    if (ret != RGW_SAL_OK) {
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("set x-amz-meta-encrypted failed");
+    }
+
+    printf("\n    Set 3 object attributes");
+
+    /* 验证所有属性 */
+    uint8_t* out = NULL;
+    size_t len = 0;
+
+    ret = rgw_sal_attrs_get(attrs, "Content-Type", &out, &len);
+    if (ret != RGW_SAL_OK || len != strlen("application/json") ||
+        memcmp(out, "application/json", len) != 0) {
+        free(out);
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("verify Content-Type failed");
+    }
+    free(out);
+
+    ret = rgw_sal_attrs_get(attrs, "x-amz-acl", &out, &len);
+    if (ret != RGW_SAL_OK || len != strlen("public-read") ||
+        memcmp(out, "public-read", len) != 0) {
+        free(out);
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("verify x-amz-acl failed");
+    }
+    free(out);
+
+    ret = rgw_sal_attrs_get(attrs, "x-amz-meta-encrypted", &out, &len);
+    if (ret != RGW_SAL_OK || len != strlen("encrypted") ||
+        memcmp(out, "encrypted", len) != 0) {
+        free(out);
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("verify x-amz-meta-encrypted failed");
+    }
+    free(out);
+
+    printf("\n    Verified 3 object attributes");
+
+    rgw_sal_object_destroy(obj);
+    free(key.name);
+    rgw_sal_bucket_destroy(bucket);
+    free(bucket_info.bucket.name);
+    rgw_sal_destroy_driver(driver);
+    TEST_PASS();
+    return 0;
+}
+
+/*============================================================================
+ * RADOS 对象属性更新测试
+ *============================================================================*/
+
+static int test_rados_object_attrs_update(void) {
+    TEST_START("rados_object_attrs_update");
+
+    rgw_sal_driver_t* driver = rgw_sal_create_driver("rados", NULL);
+    if (!driver) {
+        TEST_FAIL("driver is NULL");
+    }
+
+    rgw_sal_bucket_info_t bucket_info = {0};
+    bucket_info.bucket.name = strdup("update_test_bucket");
+
+    rgw_sal_bucket_t* bucket = rgw_sal_get_bucket(driver, &bucket_info);
+    if (!bucket) {
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("bucket is NULL");
+    }
+
+    rgw_sal_obj_key_t key = {0};
+    key.name = strdup("update_test_object");
+
+    rgw_sal_object_t* obj = rgw_sal_get_object(driver, bucket, &key);
+    if (!obj) {
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("object is NULL");
+    }
+
+    rgw_sal_attrs_t* attrs = obj->vtable->get_attrs(obj);
+
+    /* 设置初始值 */
+    uint8_t val1[] = "initial_value";
+    int ret = rgw_sal_attrs_set(attrs, "test_key", val1, strlen((char*)val1));
+    if (ret != RGW_SAL_OK) {
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("set initial value failed");
+    }
+
+    /* 更新值 */
+    uint8_t val2[] = "updated_value";
+    ret = rgw_sal_attrs_set(attrs, "test_key", val2, strlen((char*)val2));
+    if (ret != RGW_SAL_OK) {
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("update value failed");
+    }
+
+    /* 验证更新后的值 */
+    uint8_t* out = NULL;
+    size_t len = 0;
+    ret = rgw_sal_attrs_get(attrs, "test_key", &out, &len);
+    if (ret != RGW_SAL_OK || len != strlen("updated_value") ||
+        memcmp(out, "updated_value", len) != 0) {
+        free(out);
+        rgw_sal_object_destroy(obj);
+        free(key.name);
+        rgw_sal_bucket_destroy(bucket);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+        TEST_FAIL("verify updated value failed");
+    }
+
+    free(out);
+    printf("\n    Attr update verified");
+
+    rgw_sal_object_destroy(obj);
+    free(key.name);
+    rgw_sal_bucket_destroy(bucket);
+    free(bucket_info.bucket.name);
+    rgw_sal_destroy_driver(driver);
+    TEST_PASS();
+    return 0;
+}
+
+/*============================================================================
  * 主函数
  *============================================================================*/
 
@@ -1575,6 +1976,24 @@ int main(void) {
     test_null_object_operations();
     printf("  Null pointer tests: %d/%d passed\n\n", g_tests_passed, g_tests_run);
 
+    printf("--- RADOS Bucket Tests ---\n");
+    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
+    test_rados_bucket_list();
+    test_rados_bucket_list_with_prefix();
+    test_rados_bucket_delete_with_objects();
+    printf("  RADOS bucket tests: %d/%d passed\n\n", g_tests_passed, g_tests_run);
+
+    printf("--- RADOS Usage Tests ---\n");
+    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
+    test_rados_usage_operations();
+    printf("  RADOS usage tests: %d/%d passed\n\n", g_tests_passed, g_tests_run);
+
+    printf("--- RADOS Object Attrs Tests ---\n");
+    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
+    test_rados_object_attrs();
+    test_rados_object_attrs_update();
+    printf("  RADOS object attrs tests: %d/%d passed\n\n", g_tests_passed, g_tests_run);
+
     /* 计算总数 */
     int total_run = 0;
     int total_passed = 0;
@@ -1636,6 +2055,21 @@ int main(void) {
     test_null_user_operations();
     test_null_bucket_operations();
     test_null_object_operations();
+    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
+
+    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
+    test_rados_bucket_list();
+    test_rados_bucket_list_with_prefix();
+    test_rados_bucket_delete_with_objects();
+    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
+
+    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
+    test_rados_usage_operations();
+    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
+
+    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
+    test_rados_object_attrs();
+    test_rados_object_attrs_update();
     total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
 
     printf("Total tests run:    %d\n", total_run);

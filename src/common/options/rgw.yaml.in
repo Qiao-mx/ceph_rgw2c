@@ -3969,6 +3969,23 @@ options:
   - dbstore
   - motr
   - daos
+  - c_rados
+  - c_dbstore
+  - c_posix
+- name: rgw_c_sal_cache_size
+  type: size
+  level: advanced
+  desc: Cache size for C SAL implementation
+  default: 1024
+  services:
+  - rgw
+- name: rgw_c_sal_enable_stats
+  type: bool
+  level: advanced
+  desc: Enable statistics collection for C SAL implementation
+  default: false
+  services:
+  - rgw
 - name: rgw_config_store
   type: str
   level: advanced

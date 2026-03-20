@@ -442,6 +442,317 @@ static int test_user_clone(void) {
 }
 
 /*============================================================================
+ * SAL 用户生命周期测试
+ *============================================================================*/
+
+/**
+ * @brief 测试用户完整生命周期 (CRUD)
+ */
+static int test_sal_user_lifecycle(void) {
+    printf("\n  [SAL User Lifecycle Test]\n");
+    fflush(stdout);
+
+    const char* driver_names[] = {"rados", "dbstore"};
+    int num_drivers = 2;
+
+    for (int i = 0; i < num_drivers; i++) {
+        printf("  Testing with driver: %s\n", driver_names[i]);
+        fflush(stdout);
+
+        rgw_sal_driver_t* driver = rgw_sal_create_driver(driver_names[i], NULL);
+        TEST_ASSERT(driver != NULL, "create driver");
+
+        /* Create */
+        rgw_sal_user_id_t uid = {0};
+        uid.id = strdup("lifecycle_user");
+        uid.tenant = strdup("lifecycle_tenant");
+
+        rgw_sal_user_t* user = rgw_sal_get_user(driver, &uid);
+        TEST_ASSERT(user != NULL, "get user");
+
+        /* 设置属性 */
+        int ret = user->vtable->set_display_name(user, "Lifecycle Test User");
+        TEST_ASSERT_EQ(ret, RGW_SAL_OK, "set display name");
+
+        rgw_sal_attrs_t* attrs = user->vtable->get_attrs(user);
+        TEST_ASSERT(attrs != NULL, "get attrs");
+
+        uint8_t data[] = {0x01, 0x02, 0x03};
+        ret = rgw_sal_attrs_set(attrs, "lifecycle_attr", data, sizeof(data));
+        TEST_ASSERT_EQ(ret, RGW_SAL_OK, "set lifecycle attr");
+
+        /* Read - 验证设置的值 */
+        const char* display_name = user->vtable->get_display_name(user);
+        TEST_ASSERT_STR_EQ(display_name, "Lifecycle Test User", "verify display name");
+
+        /* Update */
+        ret = user->vtable->set_display_name(user, "Updated User");
+        TEST_ASSERT_EQ(ret, RGW_SAL_OK, "update display name");
+
+        display_name = user->vtable->get_display_name(user);
+        TEST_ASSERT_STR_EQ(display_name, "Updated User", "verify updated display name");
+
+        /* Clone - 验证复制功能 */
+        rgw_sal_user_t* cloned = user->vtable->clone(user);
+        TEST_ASSERT(cloned != NULL, "clone user");
+        const char* cloned_name = cloned->vtable->get_display_name(cloned);
+        TEST_ASSERT_STR_EQ(cloned_name, "Updated User", "cloned display name");
+
+        rgw_sal_user_destroy(cloned);
+        rgw_sal_user_destroy(user);
+        free(uid.id);
+        free(uid.tenant);
+        rgw_sal_destroy_driver(driver);
+    }
+
+    printf("  SAL User Lifecycle Test completed\n");
+    fflush(stdout);
+    return 0;
+}
+
+/**
+ * @brief 测试桶完整生命周期
+ */
+static int test_sal_bucket_lifecycle(void) {
+    printf("\n  [SAL Bucket Lifecycle Test]\n");
+    fflush(stdout);
+
+    const char* driver_names[] = {"rados", "dbstore"};
+
+    for (int i = 0; i < 2; i++) {
+        printf("  Testing with driver: %s\n", driver_names[i]);
+        fflush(stdout);
+
+        rgw_sal_driver_t* driver = rgw_sal_create_driver(driver_names[i], NULL);
+        TEST_ASSERT(driver != NULL, "create driver");
+
+        /* Create */
+        rgw_sal_bucket_info_t info = {0};
+        info.bucket.name = strdup("lifecycle_bucket");
+        info.bucket.tenant = strdup("lifecycle_tenant");
+
+        rgw_sal_bucket_t* bucket = rgw_sal_get_bucket(driver, &info);
+        TEST_ASSERT(bucket != NULL, "get bucket");
+
+        /* Read */
+        const char* name = bucket->vtable->get_name(bucket);
+        TEST_ASSERT_STR_EQ(name, "lifecycle_bucket", "bucket name");
+
+        const char* tenant = bucket->vtable->get_tenant(bucket);
+        TEST_ASSERT_STR_EQ(tenant, "lifecycle_tenant", "bucket tenant");
+
+        /* 设置属性 */
+        rgw_sal_attrs_t* attrs = bucket->vtable->get_attrs(bucket);
+        TEST_ASSERT(attrs != NULL, "get attrs");
+
+        uint8_t data[] = "bucket_custom_attr";
+        int ret = rgw_sal_attrs_set(attrs, "custom_attr", data, strlen((char*)data));
+        TEST_ASSERT_EQ(ret, RGW_SAL_OK, "set bucket attr");
+
+        /* Clone */
+        rgw_sal_bucket_t* cloned = bucket->vtable->clone(bucket);
+        TEST_ASSERT(cloned != NULL, "clone bucket");
+        const char* cloned_name = cloned->vtable->get_name(cloned);
+        TEST_ASSERT_STR_EQ(cloned_name, "lifecycle_bucket", "cloned bucket name");
+
+        rgw_sal_bucket_destroy(cloned);
+        rgw_sal_bucket_destroy(bucket);
+        free(info.bucket.name);
+        free(info.bucket.tenant);
+        rgw_sal_destroy_driver(driver);
+    }
+
+    printf("  SAL Bucket Lifecycle Test completed\n");
+    fflush(stdout);
+    return 0;
+}
+
+/**
+ * @brief 测试对象完整生命周期
+ */
+static int test_sal_object_lifecycle(void) {
+    printf("\n  [SAL Object Lifecycle Test]\n");
+    fflush(stdout);
+
+    const char* driver_names[] = {"rados", "dbstore"};
+
+    for (int i = 0; i < 2; i++) {
+        printf("  Testing with driver: %s\n", driver_names[i]);
+        fflush(stdout);
+
+        rgw_sal_driver_t* driver = rgw_sal_create_driver(driver_names[i], NULL);
+        TEST_ASSERT(driver != NULL, "create driver");
+
+        /* 创建桶 */
+        rgw_sal_bucket_info_t bucket_info = {0};
+        bucket_info.bucket.name = strdup("obj_lifecycle_bucket");
+
+        rgw_sal_bucket_t* bucket = rgw_sal_get_bucket(driver, &bucket_info);
+        TEST_ASSERT(bucket != NULL, "get bucket");
+
+        /* Create */
+        rgw_sal_obj_key_t key = {0};
+        key.name = strdup("lifecycle_object");
+        key.instance = strdup("v1");
+
+        rgw_sal_object_t* obj = rgw_sal_get_object(driver, bucket, &key);
+        TEST_ASSERT(obj != NULL, "get object");
+
+        /* Read */
+        const char* obj_name = obj->vtable->get_name(obj);
+        TEST_ASSERT_STR_EQ(obj_name, "lifecycle_object", "object name");
+
+        const char* instance = obj->vtable->get_instance(obj);
+        TEST_ASSERT_STR_EQ(instance, "v1", "object instance");
+
+        /* 设置属性 */
+        rgw_sal_attrs_t* attrs = obj->vtable->get_attrs(obj);
+        TEST_ASSERT(attrs != NULL, "get attrs");
+
+        uint8_t data[] = "object_content_type";
+        int ret = rgw_sal_attrs_set(attrs, "Content-Type", data, strlen((char*)data));
+        TEST_ASSERT_EQ(ret, RGW_SAL_OK, "set object attr");
+
+        /* Clone */
+        rgw_sal_object_t* cloned = obj->vtable->clone(obj);
+        TEST_ASSERT(cloned != NULL, "clone object");
+        const char* cloned_name = cloned->vtable->get_name(cloned);
+        TEST_ASSERT_STR_EQ(cloned_name, "lifecycle_object", "cloned object name");
+
+        rgw_sal_object_destroy(cloned);
+        rgw_sal_object_destroy(obj);
+        rgw_sal_bucket_destroy(bucket);
+        free(key.name);
+        free(key.instance);
+        free(bucket_info.bucket.name);
+        rgw_sal_destroy_driver(driver);
+    }
+
+    printf("  SAL Object Lifecycle Test completed\n");
+    fflush(stdout);
+    return 0;
+}
+
+/*============================================================================
+ * Usage 操作测试
+ *============================================================================*/
+
+/**
+ * @brief 测试 Usage 修剪操作
+ */
+static int test_usage_trim_omap(void) {
+    printf("\n  [Usage Trim Test]\n");
+    fflush(stdout);
+
+    const char* driver_names[] = {"rados", "dbstore"};
+
+    for (int i = 0; i < 2; i++) {
+        printf("  Testing with driver: %s\n", driver_names[i]);
+        fflush(stdout);
+
+        rgw_sal_driver_t* driver = rgw_sal_create_driver(driver_names[i], NULL);
+        TEST_ASSERT(driver != NULL, "create driver");
+
+        rgw_sal_user_id_t uid = {0};
+        uid.id = strdup("usage_trim_user");
+
+        rgw_sal_user_t* user = rgw_sal_get_user(driver, &uid);
+        if (user == NULL) {
+            free(uid.id);
+            rgw_sal_destroy_driver(driver);
+            continue;
+        }
+
+        /* 测试 read_usage */
+        if (user->vtable->read_usage) {
+            rgw_sal_usage_info_t usage = {0};
+            int ret = user->vtable->read_usage(user, NULL, 0, 0, 100, &usage);
+            printf("    read_usage returned: %d (bytes=%llu, entries=%llu)\n",
+                   ret, (unsigned long long)usage.total_bytes,
+                   (unsigned long long)usage.total_entries);
+        } else {
+            printf("    read_usage not implemented\n");
+        }
+
+        /* 测试 trim_usage */
+        if (user->vtable->trim_usage) {
+            int ret = user->vtable->trim_usage(user, NULL, 0, 0);
+            printf("    trim_usage returned: %d\n", ret);
+        } else {
+            printf("    trim_usage not implemented\n");
+        }
+
+        rgw_sal_user_destroy(user);
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+    }
+
+    printf("  Usage Trim Test completed\n");
+    fflush(stdout);
+    return 0;
+}
+
+/**
+ * @brief 测试 Usage 清除操作
+ */
+static int test_usage_clear_omap(void) {
+    printf("\n  [Usage Clear Test]\n");
+    fflush(stdout);
+
+    const char* driver_names[] = {"rados", "dbstore"};
+
+    for (int i = 0; i < 2; i++) {
+        printf("  Testing with driver: %s\n", driver_names[i]);
+        fflush(stdout);
+
+        rgw_sal_driver_t* driver = rgw_sal_create_driver(driver_names[i], NULL);
+        TEST_ASSERT(driver != NULL, "create driver");
+
+        rgw_sal_user_id_t uid = {0};
+        uid.id = strdup("usage_clear_user");
+
+        rgw_sal_user_t* user = rgw_sal_get_user(driver, &uid);
+        if (user == NULL) {
+            free(uid.id);
+            rgw_sal_destroy_driver(driver);
+            continue;
+        }
+
+        /* 先添加一些 usage 数据 */
+        if (user->vtable->read_usage) {
+            rgw_sal_usage_info_t usage_before = {0};
+            int ret = user->vtable->read_usage(user, NULL, 0, 0, 100, &usage_before);
+            printf("    Usage before clear: bytes=%llu, entries=%llu\n",
+                   (unsigned long long)usage_before.total_bytes,
+                   (unsigned long long)usage_before.total_entries);
+
+            /* 修剪所有 usage */
+            if (user->vtable->trim_usage) {
+                ret = user->vtable->trim_usage(user, NULL, 0, (uint64_t)-1);
+                printf("    trim_usage returned: %d\n", ret);
+
+                /* 再次读取验证 */
+                rgw_sal_usage_info_t usage_after = {0};
+                ret = user->vtable->read_usage(user, NULL, 0, 0, 100, &usage_after);
+                printf("    Usage after trim: bytes=%llu, entries=%llu\n",
+                       (unsigned long long)usage_after.total_bytes,
+                       (unsigned long long)usage_after.total_entries);
+            }
+        } else {
+            printf("    read_usage not implemented\n");
+        }
+
+        rgw_sal_user_destroy(user);
+        free(uid.id);
+        rgw_sal_destroy_driver(driver);
+    }
+
+    printf("  Usage Clear Test completed\n");
+    fflush(stdout);
+    return 0;
+}
+
+/*============================================================================
  * 主函数
  *============================================================================*/
 
@@ -473,6 +784,15 @@ int main(void) {
     RUN_TEST(test_vtable_functions);
     RUN_TEST(test_cluster_id);
     RUN_TEST(test_user_clone);
+
+    /* 生命周期测试 */
+    RUN_TEST(test_sal_user_lifecycle);
+    RUN_TEST(test_sal_bucket_lifecycle);
+    RUN_TEST(test_sal_object_lifecycle);
+
+    /* Usage 操作测试 */
+    RUN_TEST(test_usage_trim_omap);
+    RUN_TEST(test_usage_clear_omap);
 
     /* 压力测试 */
     RUN_TEST(test_memory_management);

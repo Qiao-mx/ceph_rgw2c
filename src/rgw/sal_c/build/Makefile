@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named test_basic
+
+# Build rule for target.
+test_basic: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_basic
+.PHONY : test_basic
+
+# fast build rule for target.
+test_basic/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_basic.dir/build.make tests/CMakeFiles/test_basic.dir/build
+.PHONY : test_basic/fast
+
+#=============================================================================
 # Target rules for targets named test_rados_driver
 
 # Build rule for target.
@@ -129,6 +142,32 @@ test_rados_driver/fast:
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_rados_driver.dir/build.make tests/CMakeFiles/test_rados_driver.dir/build
 .PHONY : test_rados_driver/fast
 
+#=============================================================================
+# Target rules for targets named test_dbstore_driver
+
+# Build rule for target.
+test_dbstore_driver: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_dbstore_driver
+.PHONY : test_dbstore_driver
+
+# fast build rule for target.
+test_dbstore_driver/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dbstore_driver.dir/build.make tests/CMakeFiles/test_dbstore_driver.dir/build
+.PHONY : test_dbstore_driver/fast
+
+#=============================================================================
+# Target rules for targets named test_integration
+
+# Build rule for target.
+test_integration: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_integration
+.PHONY : test_integration
+
+# fast build rule for target.
+test_integration/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_integration.dir/build.make tests/CMakeFiles/test_integration.dir/build
+.PHONY : test_integration/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -137,6 +176,9 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... test_basic"
+	@echo "... test_dbstore_driver"
+	@echo "... test_integration"
 	@echo "... test_rados_driver"
 .PHONY : help
 
