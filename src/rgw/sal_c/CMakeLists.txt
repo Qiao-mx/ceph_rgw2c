@@ -17,6 +17,9 @@ set(RGW_SAL_C_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_account_serde.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_group_serde.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_oidc_serde.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_lifecycle.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_multipart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/rgw_notification.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rgw_sal_usage.c
 )
 
@@ -25,6 +28,8 @@ set(RGW_SAL_C_DRIVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_rados.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_dbstore.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_posix.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_daos.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/rgw_sal_daos_serde.c
 )
 
 # 合并所有源文件

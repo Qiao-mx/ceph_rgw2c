@@ -22,7 +22,7 @@ CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=Debug
+CMAKE_BUILD_TYPE:STRING=
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -205,7 +205,7 @@ RGWSALC_IS_TOP_LEVEL:STATIC=ON
 RGWSALC_SOURCE_DIR:STATIC=/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c
 
 //Enable AddressSanitizer for tests
-WITH_ASAN:BOOL=OFF
+WITH_ASAN:BOOL=ON
 
 
 ########################

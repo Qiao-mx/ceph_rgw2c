@@ -6,5 +6,5 @@ C_DEFINES =
 
 C_INCLUDES = -I/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include -I/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core -I/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/drivers -I/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/../c_common/include
 
-C_FLAGS = -g
+C_FLAGS = -fsanitize=address -g -O1
 

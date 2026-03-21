@@ -138,6 +138,14 @@ const uint8_t *rgw_sal_attrs_get(const rgw_sal_attrs_t *attrs, const char *key, 
 int rgw_sal_attrs_del(rgw_sal_attrs_t *attrs, const char *key);
 
 /**
+ * @brief 克隆属性映射
+ *
+ * @param attrs 要克隆的属性映射
+ * @return 克隆的属性映射，失败返回 NULL
+ */
+rgw_sal_attrs_t *rgw_sal_attrs_clone(rgw_sal_attrs_t *attrs);
+
+/**
  * @brief 桶列表结果
  */
 struct rgw_sal_bucket_list {
@@ -370,6 +378,25 @@ int rgw_sal_object_write(rgw_sal_object_t *obj, void *dpp, void *y, uint64_t off
  * @brief 释放对象
  */
 void rgw_sal_object_destroy(rgw_sal_object_t *obj);
+
+/*============================================================================
+ * 简化的创建函数（用于测试）
+ *============================================================================*/
+
+/**
+ * @brief 创建用户对象（简化版本，用于测试）
+ */
+rgw_sal_user_t *rgw_sal_user_create_simple(void);
+
+/**
+ * @brief 创建桶对象（简化版本，用于测试）
+ */
+rgw_sal_bucket_t *rgw_sal_bucket_create_simple(void);
+
+/**
+ * @brief 创建对象（简化版本，用于测试）
+ */
+rgw_sal_object_t *rgw_sal_object_create_simple(void);
 
 #ifdef __cplusplus
 }

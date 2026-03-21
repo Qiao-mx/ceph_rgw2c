@@ -28,11 +28,17 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal.c.o
  /usr/include/x86_64-linux-gnu/bits/long-double.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h
  /usr/include/x86_64-linux-gnu/bits/select.h
+ /usr/include/x86_64-linux-gnu/bits/select2.h
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h
@@ -78,6 +84,7 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o
  /usr/include/stdlib.h
  /usr/include/string.h
  /usr/include/strings.h
+ /usr/include/time.h
  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h
  /usr/include/x86_64-linux-gnu/bits/byteswap.h
  /usr/include/x86_64-linux-gnu/bits/endian.h
@@ -88,14 +95,21 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o
  /usr/include/x86_64-linux-gnu/bits/long-double.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h
  /usr/include/x86_64-linux-gnu/bits/select.h
+ /usr/include/x86_64-linux-gnu/bits/select2.h
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h
+ /usr/include/x86_64-linux-gnu/bits/time.h
  /usr/include/x86_64-linux-gnu/bits/time64.h
  /usr/include/x86_64-linux-gnu/bits/timesize.h
  /usr/include/x86_64-linux-gnu/bits/types.h
@@ -105,8 +119,10 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o
  /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h
  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h
+ /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h
  /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h
  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h
+ /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h
  /usr/include/x86_64-linux-gnu/bits/types/time_t.h
  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h
  /usr/include/x86_64-linux-gnu/bits/typesizes.h
@@ -126,10 +142,18 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/core/rgw_sal_types.c.o
 
 tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/drivers/rgw_sal_rados.c
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/include/rgw_acl_serde.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/include/rgw_bucket_serde.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/include/rgw_errors.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/include/rgw_omap.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/include/rgw_policy_serde.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/include/rgw_user_serde.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_account_serde.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_group_serde.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_lifecycle.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_multipart.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_notification.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_oidc_serde.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_sal.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_sal_c.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_sal_errors.h
@@ -182,15 +206,25 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o
  /usr/include/x86_64-linux-gnu/bits/posix_opt.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h
  /usr/include/x86_64-linux-gnu/bits/select.h
+ /usr/include/x86_64-linux-gnu/bits/select2.h
  /usr/include/x86_64-linux-gnu/bits/sockaddr.h
  /usr/include/x86_64-linux-gnu/bits/socket.h
+ /usr/include/x86_64-linux-gnu/bits/socket2.h
  /usr/include/x86_64-linux-gnu/bits/socket_type.h
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdio.h
+ /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h
@@ -221,6 +255,8 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o
  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h
  /usr/include/x86_64-linux-gnu/bits/typesizes.h
  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h
+ /usr/include/x86_64-linux-gnu/bits/unistd-decl.h
+ /usr/include/x86_64-linux-gnu/bits/unistd.h
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h
  /usr/include/x86_64-linux-gnu/bits/waitflags.h
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h
@@ -240,7 +276,7 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/drivers/rgw_sal_rados.c.o
 
 tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/src/rgw_sal_usage.c
- /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_sal_errors.h
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/rgw_sal_errors.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/rgw_sal_usage.h
  /usr/include/alloca.h
  /usr/include/asm-generic/bitsperlong.h
@@ -293,15 +329,25 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o
  /usr/include/x86_64-linux-gnu/bits/posix_opt.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h
  /usr/include/x86_64-linux-gnu/bits/select.h
+ /usr/include/x86_64-linux-gnu/bits/select2.h
  /usr/include/x86_64-linux-gnu/bits/sockaddr.h
  /usr/include/x86_64-linux-gnu/bits/socket.h
+ /usr/include/x86_64-linux-gnu/bits/socket2.h
  /usr/include/x86_64-linux-gnu/bits/socket_type.h
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdio.h
+ /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h
@@ -329,6 +375,8 @@ tests/CMakeFiles/test_rados_driver.dir/__/src/rgw_sal_usage.c.o
  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h
  /usr/include/x86_64-linux-gnu/bits/typesizes.h
  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h
+ /usr/include/x86_64-linux-gnu/bits/unistd-decl.h
+ /usr/include/x86_64-linux-gnu/bits/unistd.h
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h
  /usr/include/x86_64-linux-gnu/bits/waitflags.h
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h
@@ -354,10 +402,13 @@ tests/CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_sal_types.h
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/drivers/rgw_sal_rados.h
  /usr/include/alloca.h
- /usr/include/assert.h
+ /usr/include/asm-generic/errno-base.h
+ /usr/include/asm-generic/errno.h
  /usr/include/endian.h
+ /usr/include/errno.h
  /usr/include/features-time64.h
  /usr/include/features.h
+ /usr/include/linux/errno.h
  /usr/include/stdc-predef.h
  /usr/include/stdint.h
  /usr/include/stdio.h
@@ -365,22 +416,33 @@ tests/CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o
  /usr/include/string.h
  /usr/include/strings.h
  /usr/include/time.h
+ /usr/include/x86_64-linux-gnu/asm/errno.h
  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h
  /usr/include/x86_64-linux-gnu/bits/byteswap.h
  /usr/include/x86_64-linux-gnu/bits/endian.h
  /usr/include/x86_64-linux-gnu/bits/endianness.h
+ /usr/include/x86_64-linux-gnu/bits/errno.h
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h
  /usr/include/x86_64-linux-gnu/bits/floatn.h
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h
  /usr/include/x86_64-linux-gnu/bits/long-double.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h
  /usr/include/x86_64-linux-gnu/bits/select.h
+ /usr/include/x86_64-linux-gnu/bits/select2.h
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdio.h
+ /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h

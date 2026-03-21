@@ -33,17 +33,23 @@ tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_dbstore.c.o: \
  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
+ /usr/include/x86_64-linux-gnu/bits/select2.h \
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h /usr/include/alloca.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib-float.h /usr/include/string.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
- /usr/include/strings.h /usr/include/stdio.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
+ /usr/include/strings.h \
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
+ /usr/include/stdio.h /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
@@ -51,7 +57,10 @@ tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_dbstore.c.o: \
  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
- /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
@@ -68,4 +77,9 @@ tests/CMakeFiles/test_integration.dir/__/src/drivers/rgw_sal_dbstore.c.o: \
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/../c_common/include/rgw_sqlite.h \
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/../c_common/include/rgw_user_serde.h \
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/../c_common/include/rgw_bucket_serde.h \
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_lifecycle.h \
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_multipart.h \
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_account_serde.h \
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_group_serde.h \
+ /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/include/core/rgw_notification.h \
  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/../c_common/include/containers/rgw_cmemory.h

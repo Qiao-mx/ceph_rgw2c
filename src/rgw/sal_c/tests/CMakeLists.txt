@@ -143,6 +143,52 @@ if(HAVE_LIBRADOS)
 endif()
 
 # ========================================================================
+# DAOS 驱动测试 (需要 DS3 库)
+# ========================================================================
+
+# 检查 DS3 库是否可用
+find_library(DS3_LIBRARY 
+    NAMES ds3 
+    PATHS /usr/lib /usr/local/lib /lib
+)
+
+find_path(DS3_INCLUDE_DIR 
+    NAMES ds3.h 
+    PATHS /usr/include /usr/local/include
+)
+
+if(DS3_LIBRARY AND DS3_INCLUDE_DIR)
+    message(STATUS "Found DS3: library=${DS3_LIBRARY}, include=${DS3_INCLUDE_DIR}")
+    set(HAVE_DS3 1)
+    add_definitions(-DHAVE_DS3)
+else()
+    message(WARNING "DS3 library not found - DAOS tests will be skipped")
+    message(WARNING "To enable DAOS tests, install DAOS SDK from https://docs.daos.io/")
+    set(HAVE_DS3 0)
+endif()
+
+if(HAVE_DS3)
+    # DAOS 驱动测试
+    add_executable(test_daos_driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_daos_driver.c
+        ${SAL_COMMON_SOURCES}
+        ${SAL_C_ROOT}/src/rgw_sal_usage.c
+        ${SAL_C_ROOT}/src/drivers/rgw_sal_daos.c
+        ${SAL_C_ROOT}/src/drivers/rgw_sal_daos_serde.c
+    )
+
+    target_include_directories(test_daos_driver PRIVATE ${SAL_INCLUDE_DIRS})
+    target_link_libraries(test_daos_driver ${DS3_LIBRARY} m)
+
+    if(WITH_ASAN)
+        target_compile_options(test_daos_driver PRIVATE -fsanitize=address -g -O1)
+        target_link_options(test_daos_driver PRIVATE -fsanitize=address)
+    endif()
+
+    add_test(NAME test_daos_driver COMMAND test_daos_driver)
+endif()
+
+# ========================================================================
 # 配置信息
 # ========================================================================
 
@@ -152,6 +198,7 @@ message(STATUS "========================================")
 message(STATUS "SAL C Root: ${SAL_C_ROOT}")
 message(STATUS "C Common Root: ${C_COMMON_ROOT}")
 message(STATUS "librados: ${HAVE_LIBRADOS}")
+message(STATUS "DS3 (DAOS): ${HAVE_DS3}")
 message(STATUS "AddressSanitizer: ${WITH_ASAN}")
 message(STATUS "")
 message(STATUS "Available tests:")
@@ -164,6 +211,11 @@ else()
 message(STATUS "  - test_rados_driver (requires librados) [SKIP]")
 message(STATUS "  - test_dbstore_driver (requires librados) [SKIP]")
 message(STATUS "  - test_integration (requires librados) [SKIP]")
+endif()
+if(HAVE_DS3)
+message(STATUS "  - test_daos_driver (DAOS) [BUILD]")
+else()
+message(STATUS "  - test_daos_driver (requires DS3/DAOS) [SKIP]")
 endif()
 message(STATUS "")
 message(STATUS "To run tests:")

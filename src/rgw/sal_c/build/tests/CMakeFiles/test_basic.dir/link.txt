@@ -1,1 +1,1 @@
-/usr/bin/cc -g CMakeFiles/test_basic.dir/test_basic.c.o CMakeFiles/test_basic.dir/__/src/core/rgw_sal_types.c.o -o test_basic  -lm 
+/usr/bin/cc -fsanitize=address CMakeFiles/test_basic.dir/test_basic.c.o CMakeFiles/test_basic.dir/__/src/core/rgw_sal_types.c.o -o test_basic  -lm 

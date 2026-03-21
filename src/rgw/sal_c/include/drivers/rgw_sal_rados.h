@@ -214,6 +214,36 @@ int rgw_sal_rados_object_get_attr(rgw_sal_object_t* obj,
                                     rgw_sal_yield_t* y,
                                     const rgw_sal_dpp_t* dpp);
 
+/*============================================================================
+ * 用户序列化函数
+ *============================================================================*/
+
+/**
+ * @brief 解析用户数据缓冲区
+ *
+ * @param impl 用户实现
+ * @param data 缓冲区数据
+ * @param data_len 缓冲区长度
+ * @return 错误码
+ */
+int parse_user_from_buffer(rados_user_impl_t* impl, const uint8_t* data, size_t data_len);
+
+/**
+ * @brief 将用户数据序列化为缓冲区
+ *
+ * @param impl 用户实现
+ * @param buf_size 输出：缓冲区大小
+ * @return 序列化的缓冲区，失败返回 NULL
+ */
+uint8_t* serialize_user_to_buffer(rados_user_impl_t* impl, size_t* buf_size);
+
+/**
+ * @brief 释放序列化缓冲区
+ *
+ * @param buffer 缓冲区
+ */
+void rgw_sal_free_buffer(uint8_t* buffer);
+
 #ifdef __cplusplus
 }
 #endif

@@ -32,4 +32,11 @@ int rgw_sal_daos_init(rgw_sal_driver_t* driver, rgw_sal_daos_config_t* config);
  */
 int rgw_sal_daos_shutdown(rgw_sal_driver_t* driver);
 
+/**
+ * @brief 获取 DAOS 驱动实现
+ * @param driver 驱动实例
+ * @return 驱动实现指针
+ */
+void* rgw_sal_daos_get_driver_impl(rgw_sal_driver_t* driver);
+
 #endif /* RGW_SAL_DAOS_H */

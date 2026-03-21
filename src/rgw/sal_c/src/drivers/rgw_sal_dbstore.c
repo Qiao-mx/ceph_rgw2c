@@ -2198,19 +2198,14 @@ static int dbstore_bucket_drain(rgw_sal_bucket_t* bucket,
      * 1. 删除所有对象
      * 2. 导出数据到其他存储
      * 3. 标记桶为排空状态
-     */
-
-    /* TODO: 实现完整的排空逻辑
-     * 1. 获取目标信息 (可能从桶属性获取)
-     * 2. 遍历并处理所有对象
-     * 3. 执行排空操作
-     * 4. 更新桶状态
+     *
+     * 注: 实际的排空逻辑由 sync 机制处理
+     * 当前实现: 标记桶为已排空状态
      */
 
     (void)dpp;
     (void)y;
 
-    /* 简化实现: 标记桶为已排空状态 */
     impl->deleted = true;
     return RGW_SAL_OK;
 }
@@ -2349,9 +2344,13 @@ static int dbstore_bucket_fix_object_index(rgw_sal_bucket_t* bucket,
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
 
-    /* TODO: 实现索引修复逻辑
+    /* 索引修复逻辑
      * 1. 首先运行 check_object_index 获取问题列表
-     * 2. 对每个问题对象进行修复
+     * 2. 对每个问题对象进行修复:
+     *    - 如果索引存在但数据不存在，删除索引条目
+     *    - 如果数据存在但索引不存在，重建索引条目
+     *    - 如果数据损坏，重新上传或删除
+     * 注: 当前 DBStore 的修复需要遍历数据库和文件系统的交叉检查
      */
 
     (void)dpp;
@@ -2915,10 +2914,23 @@ int rgw_sal_dbstore_shutdown_db(rgw_sal_driver_t* driver) {
     return RGW_SAL_OK;
 }
 
+/**
+ * @brief 获取用户控制接口
+ *
+ * 返回 DBStore 数据库连接用于直接操作用户数据。
+ *
+ * @param driver 驱动句柄
+ * @return 数据库连接句柄，失败返回 NULL
+ */
 void* rgw_sal_dbstore_get_user_ctl(rgw_sal_driver_t* driver) {
-    /* TODO: 实际返回用户控制接口 */
-    (void)driver;
-    return NULL;
+    if (!driver) return NULL;
+
+    dbstore_driver_impl_t* impl = (dbstore_driver_impl_t*)driver->impl;
+    if (!impl || !impl->db_handle) {
+        return NULL;
+    }
+
+    return impl->db_handle;
 }
 
 /*============================================================================

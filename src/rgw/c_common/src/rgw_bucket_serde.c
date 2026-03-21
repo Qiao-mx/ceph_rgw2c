@@ -1540,8 +1540,24 @@ int rgw_bucket_info_deep_copy(const rgw_bucket_info_t* src,
 
     rgw_bucket_info_free_members(dst);
 
-    /* 复制简单类型 */
-    *dst = *src;
+    /* 复制简单类型字段 */
+    dst->bucket.proj_ver = src->bucket.proj_ver;
+    dst->owner.type = src->owner.type;
+    dst->flags = src->flags;
+    dst->creation_time = src->creation_time;
+    dst->has_instance_obj = src->has_instance_obj;
+    dst->requester_pays = src->requester_pays;
+    dst->has_website = src->has_website;
+    dst->swift_versioning = src->swift_versioning;
+    dst->reshard_info.status = src->reshard_info.status;
+    dst->reshard_info.num_shards = src->reshard_info.num_shards;
+    dst->reshard_info.new_bucket_instance_id = src->reshard_info.new_bucket_instance_id;
+    dst->quota.max_size = src->quota.max_size;
+    dst->quota.max_objects = src->quota.max_objects;
+    dst->quota.enabled = src->quota.enabled;
+    dst->obj_lock.enabled = src->obj_lock.enabled;
+    dst->obj_lock.mode = src->obj_lock.mode;
+    dst->obj_lock.retain_days = src->obj_lock.retain_days;
 
     /* 深拷贝字符串成员 */
     dst->bucket.tenant = str_dup(src->bucket.tenant);
@@ -1550,27 +1566,63 @@ int rgw_bucket_info_deep_copy(const rgw_bucket_info_t* src,
     dst->bucket.bucket_id = str_dup(src->bucket.bucket_id);
     dst->bucket.placement_rule = str_dup(src->bucket.placement_rule);
 
+    /* 深拷贝 owner - 根据类型处理 */
     if (src->owner.type == 0) {
         dst->owner.user_id = str_dup(src->owner.user_id);
+        dst->owner.account_id = NULL;
     } else {
         dst->owner.account_id = str_dup(src->owner.account_id);
+        dst->owner.user_id = NULL;
     }
 
     dst->zonegroup = str_dup(src->zonegroup);
     dst->placement_rule.name = str_dup(src->placement_rule.name);
     dst->placement_rule.storage_class = str_dup(src->placement_rule.storage_class);
-
-    dst->layout.current_index.normal.shard_pool =
-        str_dup(src->layout.current_index.normal.shard_pool);
-    dst->layout.current_index.normal.object_prefix =
-        str_dup(src->layout.current_index.normal.object_prefix);
-
     dst->swift_ver_location = str_dup(src->swift_ver_location);
     dst->new_bucket_instance_id = str_dup(src->new_bucket_instance_id);
 
+    /* 深拷贝 website_conf */
     dst->website_conf.index_suffix = str_dup(src->website_conf.index_suffix);
     dst->website_conf.error_suffix = str_dup(src->website_conf.error_suffix);
     dst->website_conf.redirect_url = str_dup(src->website_conf.redirect_url);
+
+    /* 深拷贝 layout.current_index */
+    dst->layout.current_index.type = src->layout.current_index.type;
+    dst->layout.current_index.normal.num_shards = src->layout.current_index.normal.num_shards;
+    dst->layout.current_index.normal.shard_pool_id = src->layout.current_index.normal.shard_pool_id;
+    dst->layout.current_index.normal.shard_pool = str_dup(src->layout.current_index.normal.shard_pool);
+    dst->layout.current_index.normal.object_prefix = str_dup(src->layout.current_index.normal.object_prefix);
+
+    /* 深拷贝 layout.current_index.log (rgw_bucket_index_layout_gen_t) */
+    dst->layout.current_index.log.gen_id = str_dup(src->layout.current_index.log.gen_id);
+    dst->layout.current_index.log.layout.num_shards = src->layout.current_index.log.layout.num_shards;
+    dst->layout.current_index.log.layout.shard_pool_id = src->layout.current_index.log.layout.shard_pool_id;
+    dst->layout.current_index.log.layout.shard_pool = str_dup(src->layout.current_index.log.layout.shard_pool);
+    dst->layout.current_index.log.layout.object_prefix = str_dup(src->layout.current_index.log.layout.object_prefix);
+
+    /* 深拷贝 layout.current_index.ulog (rgw_bucket_index_layout_gen_t) */
+    dst->layout.current_index.ulog.gen_id = str_dup(src->layout.current_index.ulog.gen_id);
+    dst->layout.current_index.ulog.layout.num_shards = src->layout.current_index.ulog.layout.num_shards;
+    dst->layout.current_index.ulog.layout.shard_pool_id = src->layout.current_index.ulog.layout.shard_pool_id;
+    dst->layout.current_index.ulog.layout.shard_pool = str_dup(src->layout.current_index.ulog.layout.shard_pool);
+    dst->layout.current_index.ulog.layout.object_prefix = str_dup(src->layout.current_index.ulog.layout.object_prefix);
+
+    /* 深拷贝 layout.target_index */
+    dst->layout.target_index.type = src->layout.target_index.type;
+    dst->layout.target_index.normal.num_shards = src->layout.target_index.normal.num_shards;
+    dst->layout.target_index.normal.shard_pool_id = src->layout.target_index.normal.shard_pool_id;
+    dst->layout.target_index.normal.shard_pool = str_dup(src->layout.target_index.normal.shard_pool);
+    dst->layout.target_index.normal.object_prefix = str_dup(src->layout.target_index.normal.object_prefix);
+    dst->layout.target_index.log.gen_id = str_dup(src->layout.target_index.log.gen_id);
+    dst->layout.target_index.log.layout.num_shards = src->layout.target_index.log.layout.num_shards;
+    dst->layout.target_index.log.layout.shard_pool_id = src->layout.target_index.log.layout.shard_pool_id;
+    dst->layout.target_index.log.layout.shard_pool = str_dup(src->layout.target_index.log.layout.shard_pool);
+    dst->layout.target_index.log.layout.object_prefix = str_dup(src->layout.target_index.log.layout.object_prefix);
+    dst->layout.target_index.ulog.gen_id = str_dup(src->layout.target_index.ulog.gen_id);
+    dst->layout.target_index.ulog.layout.num_shards = src->layout.target_index.ulog.layout.num_shards;
+    dst->layout.target_index.ulog.layout.shard_pool_id = src->layout.target_index.ulog.layout.shard_pool_id;
+    dst->layout.target_index.ulog.layout.shard_pool = str_dup(src->layout.target_index.ulog.layout.shard_pool);
+    dst->layout.target_index.ulog.layout.object_prefix = str_dup(src->layout.target_index.ulog.layout.object_prefix);
 
     return RGW_OK;
 }

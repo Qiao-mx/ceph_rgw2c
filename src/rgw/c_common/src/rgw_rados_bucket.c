@@ -33,6 +33,15 @@
 /** 桶入口点 OMAP 键前缀 */
 #define RGW_BUCKET_EP_PREFIX   ".bucket."
 
+/** 桶统计 OMAP 键 */
+#define RGW_BUCKET_STATS_KEY   ".bucket.stats"
+
+/** 桶标签 OMAP 键前缀 */
+#define RGW_BUCKET_TAGS_PREFIX ".bucket.tags."
+
+/** 桶配置 OMAP 键前缀 */
+#define RGW_BUCKET_CONFIG_PREFIX ".bucket.config."
+
 /*============================================================================
  * 内部辅助函数
  *============================================================================*/
@@ -198,6 +207,308 @@ static void create_bucket_entrypoint(const rgw_bucket_info_t* info,
 /*============================================================================
  * 桶操作实现
  *============================================================================*/
+
+/**
+ * @brief 克隆桶
+ *
+ * 创建桶的深拷贝。
+ */
+static void* rados_bucket_clone(const rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rgw_sal_bucket_t* new_bucket = (rgw_sal_bucket_t*)calloc(1, sizeof(rgw_sal_bucket_t));
+    if (!new_bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* old_impl = (rados_bucket_impl_t*)bucket->impl;
+    rados_bucket_impl_t* new_impl = (rados_bucket_impl_t*)calloc(1, sizeof(rados_bucket_impl_t));
+    if (!new_impl) {
+        free(new_bucket);
+        return NULL;
+    }
+
+    if (old_impl->name) new_impl->name = strdup(old_impl->name);
+    if (old_impl->tenant) new_impl->tenant = strdup(old_impl->tenant);
+    if (old_impl->marker) new_impl->marker = strdup(old_impl->marker);
+    if (old_impl->bucket_id) new_impl->bucket_id = strdup(old_impl->bucket_id);
+    if (old_impl->owner_id) new_impl->owner_id = strdup(old_impl->owner_id);
+    if (old_impl->tag) new_impl->tag = strdup(old_impl->tag);
+    if (old_impl->attrs) {
+        new_impl->attrs = rgw_sal_attrs_create();
+        if (new_impl->attrs && old_impl->attrs->count > 0) {
+            for (size_t i = 0; i < old_impl->attrs->count; i++) {
+                rgw_sal_attrs_set(new_impl->attrs,
+                                 old_impl->attrs->pairs[i].key,
+                                 old_impl->attrs->pairs[i].value,
+                                 old_impl->attrs->pairs[i].value_len);
+            }
+        }
+    }
+
+    new_impl->loaded = old_impl->loaded;
+    new_impl->created = old_impl->created;
+    new_impl->deleted = old_impl->deleted;
+    new_impl->mtime = old_impl->mtime;
+
+    new_bucket->vtable = bucket->vtable;
+    new_bucket->impl = new_impl;
+    new_bucket->driver = bucket->driver;
+
+    return new_bucket;
+}
+
+/**
+ * @brief 销毁桶
+ *
+ * 释放桶占用的所有资源。
+ */
+static void rados_bucket_destroy(rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (impl) {
+        free(impl->name);
+        free(impl->tenant);
+        free(impl->marker);
+        free(impl->bucket_id);
+        free(impl->owner_id);
+        free(impl->tag);
+        if (impl->attrs) {
+            rgw_sal_attrs_destroy(impl->attrs);
+        }
+        free(impl->acl);
+        free(impl->policy);
+        free(impl);
+    }
+    bucket->impl = NULL;
+}
+
+/**
+ * @brief 获取桶名称
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 桶名称
+ */
+static const char* rados_bucket_get_name(const rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    return impl ? impl->name : NULL;
+}
+
+/**
+ * @brief 获取租户
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 租户名称
+ */
+static const char* rados_bucket_get_tenant(const rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    return impl ? impl->tenant : NULL;
+}
+
+/**
+ * @brief 获取标记
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 桶标记
+ */
+static const char* rados_bucket_get_marker(const rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    return impl ? impl->marker : NULL;
+}
+
+/**
+ * @brief 获取桶信息
+ *
+ * 返回桶的详细信息，包括所有者、属性等。
+ */
+static rgw_sal_bucket_info_t* rados_bucket_get_info(rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return NULL;
+    }
+
+    rgw_sal_bucket_info_t* info = (rgw_sal_bucket_info_t*)calloc(1, sizeof(rgw_sal_bucket_info_t));
+    if (!info) {
+        return NULL;
+    }
+
+    /* 从 impl 填充基本信息 */
+    if (impl->name) info->bucket.name = strdup(impl->name);
+    if (impl->tenant) info->bucket.tenant = strdup(impl->tenant);
+    if (impl->marker) info->bucket.marker = strdup(impl->marker);
+    if (impl->bucket_id) info->bucket.bucket_id = strdup(impl->bucket_id);
+
+    /* 从 RADOS OMAP 加载更详细的信息 */
+    if (impl->loaded && impl->bucket_id) {
+        rados_ioctx_t ioctx;
+        int ret = get_bucket_pool_ioctx(bucket->driver, &ioctx);
+        if (ret == 0) {
+            char info_oid[256];
+            ret = make_bucket_info_oid(impl->bucket_id, info_oid, sizeof(info_oid));
+            if (ret == 0) {
+                uint8_t* val = NULL;
+                size_t val_len = 0;
+                ret = rgw_omap_get(ioctx, info_oid, "", &val, &val_len);
+                if (ret == 0 && val) {
+                    rgw_bucket_info_t bucket_info;
+                    if (rgw_bucket_info_decode(val, val_len, &bucket_info) == 0) {
+                        if (bucket_info.owner.user_id) {
+                            info->owner.id = strdup(bucket_info.owner.user_id);
+                        }
+                        info->size = 0;
+                        info->size_rounded = 0;
+                        info->object_count = 0;
+                        rgw_bucket_info_free_members(&bucket_info);
+                    }
+                    free(val);
+                }
+            }
+        }
+    }
+
+    return info;
+}
+
+/**
+ * @brief 获取桶所有者
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 所有者用户对象
+ */
+static rgw_sal_user_t* rados_bucket_get_owner(rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl || !impl->owner_id) {
+        return NULL;
+    }
+
+    /* 从驱动获取用户 */
+    rgw_sal_user_id_t uid = {0};
+    uid.id = impl->owner_id;
+
+    if (bucket->driver && bucket->driver->vtable && bucket->driver->vtable->get_user) {
+        return bucket->driver->vtable->get_user(bucket->driver, &uid);
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief 获取桶属性
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 属性映射
+ */
+static rgw_sal_attrs_t* rados_bucket_get_attrs(rgw_sal_bucket_t* bucket) {
+    if (!bucket) {
+        return NULL;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return NULL;
+    }
+
+    if (!impl->attrs) {
+        impl->attrs = rgw_sal_attrs_create();
+    }
+
+    return impl->attrs;
+}
+
+/**
+ * @brief 设置桶属性
+ *
+ * @param bucket 桶句柄
+ * @param attrs 属性映射
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_attrs(rgw_sal_bucket_t* bucket, rgw_sal_attrs_t* attrs) {
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    /* 销毁旧属性 */
+    if (impl->attrs) {
+        rgw_sal_attrs_destroy(impl->attrs);
+    }
+
+    impl->attrs = attrs;
+
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 列出桶中的对象
+ *
+ * 简化实现：返回空列表
+ */
+static int rados_bucket_list(rgw_sal_bucket_t* bucket,
+                             const char* prefix, const char* delimiter,
+                             const char* marker, const char* end_marker,
+                             uint32_t max_keys, bool list_versions,
+                             rgw_sal_object_list_t** result,
+                             const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y) {
+    (void)bucket;
+    (void)prefix;
+    (void)delimiter;
+    (void)marker;
+    (void)end_marker;
+    (void)max_keys;
+    (void)list_versions;
+    (void)dpp;
+    (void)y;
+
+    if (!result) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    *result = (rgw_sal_object_list_t*)calloc(1, sizeof(rgw_sal_object_list_t));
+    if (!*result) {
+        return RGW_SAL_ERR_NO_MEMORY;
+    }
+
+    (*result)->objects = NULL;
+    (*result)->count = 0;
+    (*result)->is_truncated = false;
+
+    return RGW_SAL_OK;
+}
 
 /**
  * @brief 创建桶
@@ -487,6 +798,116 @@ static int rados_bucket_load(rgw_sal_bucket_t* bucket,
 }
 
 /**
+ * @brief 存储桶
+ *
+ * 将桶信息保存到 RADOS 存储。
+ */
+static int rados_bucket_store(rgw_sal_bucket_t* bucket,
+                               const rgw_sal_dpp_t* dpp,
+                               rgw_sal_yield_t* y,
+                               bool exclusive) {
+    (void)dpp;
+    (void)exclusive;
+
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl || !impl->bucket_id) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    /* 获取 IO 上下文 */
+    rados_ioctx_t ioctx;
+    int ret = get_bucket_pool_ioctx(bucket->driver, &ioctx);
+    if (ret != 0) {
+        return RGW_SAL_ERR_IO_ERROR;
+    }
+
+    /* 构建 OMAP 键 */
+    char info_oid[256];
+    ret = make_bucket_info_oid(impl->bucket_id, info_oid, sizeof(info_oid));
+    if (ret != 0) {
+        return ret;
+    }
+
+    /* 读取现有信息或创建新信息 */
+    uint8_t* val = NULL;
+    size_t val_len = 0;
+    rgw_bucket_info_t info;
+
+    ret = rgw_omap_get(ioctx, info_oid, "", &val, &val_len);
+    if (ret == 0 && val) {
+        ret = rgw_bucket_info_decode(val, val_len, &info);
+        free(val);
+        if (ret != 0) {
+            rgw_bucket_info_init(&info);
+        }
+    } else {
+        rgw_bucket_info_init(&info);
+    }
+
+    /* 更新信息 */
+    free(info.bucket.name);
+    info.bucket.name = impl->name ? strdup(impl->name) : NULL;
+    free(info.bucket.tenant);
+    info.bucket.tenant = impl->tenant ? strdup(impl->tenant) : NULL;
+    free(info.bucket.marker);
+    info.bucket.marker = impl->marker ? strdup(impl->marker) : NULL;
+    free(info.bucket.bucket_id);
+    info.bucket.bucket_id = impl->bucket_id ? strdup(impl->bucket_id) : NULL;
+
+    /* 编码并保存 */
+    uint8_t* info_buf = NULL;
+    size_t info_buf_len = 0;
+    ret = rgw_bucket_info_encode_alloc(&info, &info_buf, &info_buf_len);
+    rgw_bucket_info_free_members(&info);
+
+    if (ret != 0 || !info_buf) {
+        return RGW_SAL_ERR_IO_ERROR;
+    }
+
+    ret = rgw_omap_set(ioctx, info_oid, "", info_buf, info_buf_len, false);
+    free(info_buf);
+
+    if (ret != 0) {
+        return RGW_SAL_ERR_IO_ERROR;
+    }
+
+    /* 更新入口点 */
+    char ep_oid[256];
+    ret = make_bucket_ep_oid(impl->tenant, impl->name, ep_oid, sizeof(ep_oid));
+    if (ret == 0) {
+        rgw_bucket_entrypoint_t entry;
+        memset(&entry, 0, sizeof(entry));
+        entry.bucket.name = impl->name ? strdup(impl->name) : NULL;
+        entry.bucket.tenant = impl->tenant ? strdup(impl->tenant) : NULL;
+        entry.bucket.marker = impl->marker ? strdup(impl->marker) : NULL;
+        entry.bucket.bucket_id = impl->bucket_id ? strdup(impl->bucket_id) : NULL;
+        entry.creation_time = impl->mtime;
+        entry.linked = true;
+        entry.has_bucket_info = true;
+
+        uint8_t* entry_buf = NULL;
+        size_t entry_buf_len = rgw_bucket_entrypoint_encode(&entry, NULL, 0);
+        if (entry_buf_len > 0) {
+            entry_buf = (uint8_t*)malloc(entry_buf_len);
+            if (entry_buf) {
+                rgw_bucket_entrypoint_encode(&entry, entry_buf, entry_buf_len);
+                rgw_omap_set(ioctx, ep_oid, "", entry_buf, entry_buf_len, false);
+                free(entry_buf);
+            }
+        }
+
+        rgw_bucket_entrypoint_free_members(&entry);
+    }
+
+    (void)y;
+    return RGW_SAL_OK;
+}
+
+/**
  * @brief 删除桶
  *
  * 从 RADOS 存储中删除桶信息。
@@ -543,59 +964,827 @@ static int rados_bucket_delete(rgw_sal_bucket_t* bucket,
 }
 
 /**
+ * @brief 重命名桶
+ *
+ * @param bucket 桶句柄
+ * @param new_name 新名称
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_rename(rgw_sal_bucket_t* bucket,
+                               const rgw_sal_dpp_t* dpp,
+                               rgw_sal_yield_t* y,
+                               const char* new_name) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket || !new_name) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    /* 获取 IO 上下文 */
+    rados_ioctx_t ioctx;
+    int ret = get_bucket_pool_ioctx(bucket->driver, &ioctx);
+    if (ret != 0) {
+        return RGW_SAL_ERR_IO_ERROR;
+    }
+
+    /* 删除旧的入口点 */
+    char old_ep_oid[256];
+    ret = make_bucket_ep_oid(impl->tenant, impl->name, old_ep_oid, sizeof(old_ep_oid));
+    if (ret != 0) {
+        return ret;
+    }
+
+    /* 读取旧的入口点信息 */
+    uint8_t* val = NULL;
+    size_t val_len = 0;
+    ret = rgw_omap_get(ioctx, old_ep_oid, "", &val, &val_len);
+    if (ret != 0) {
+        return RGW_SAL_ERR_NOT_FOUND;
+    }
+
+    /* 更新名称 */
+    free(impl->name);
+    impl->name = strdup(new_name);
+
+    /* 创建新的入口点 */
+    char new_ep_oid[256];
+    ret = make_bucket_ep_oid(impl->tenant, impl->name, new_ep_oid, sizeof(new_ep_oid));
+    if (ret == 0) {
+        ret = rgw_omap_set(ioctx, new_ep_oid, "", val, val_len, false);
+    }
+    free(val);
+
+    /* 删除旧的入口点 */
+    if (ret == 0) {
+        rgw_omap_clear(ioctx, old_ep_oid);
+    }
+
+    return ret == 0 ? RGW_SAL_OK : RGW_SAL_ERR_IO_ERROR;
+}
+
+/**
+ * @brief 设置 ACL
+ *
+ * @param bucket 桶句柄
+ * @param acl ACL 数据
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_acl(rgw_sal_bucket_t* bucket,
+                                 void* acl,
+                                 const rgw_sal_dpp_t* dpp,
+                                 rgw_sal_yield_t* y) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    free(impl->acl);
+    impl->acl = acl;
+
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取策略
+ *
+ * @param bucket 桶句柄
+ * @param policy 输出：策略
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_policy(rgw_sal_bucket_t* bucket,
+                                    void** policy,
+                                    const rgw_sal_dpp_t* dpp,
+                                    rgw_sal_yield_t* y) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket || !policy) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    *policy = impl->policy;
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置策略
+ *
+ * @param bucket 桶句柄
+ * @param policy 策略
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_policy(rgw_sal_bucket_t* bucket,
+                                     void* policy,
+                                     const rgw_sal_dpp_t* dpp,
+                                     rgw_sal_yield_t* y) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    free(impl->policy);
+    impl->policy = policy;
+
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取标签
+ *
+ * @param bucket 桶句柄
+ * @param tag 输出：标签
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_tag(rgw_sal_bucket_t* bucket, char** tag) {
+    if (!bucket || !tag) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    if (impl->tag) {
+        *tag = strdup(impl->tag);
+    } else {
+        *tag = NULL;
+    }
+
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置标签
+ *
+ * @param bucket 桶句柄
+ * @param tag 标签
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_tag(rgw_sal_bucket_t* bucket,
+                                 const char* tag,
+                                 const rgw_sal_dpp_t* dpp,
+                                 rgw_sal_yield_t* y) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    free(impl->tag);
+    impl->tag = tag ? strdup(tag) : NULL;
+
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取使用统计
+ *
+ * @param bucket 桶句柄
+ * @param usage 输出：使用统计
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_usage(rgw_sal_bucket_t* bucket,
+                                   void** usage,
+                                   const rgw_sal_dpp_t* dpp,
+                                   rgw_sal_yield_t* y) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket || !usage) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    /* 简化实现：返回空统计 */
+    rgw_sal_usage_info_t* info = (rgw_sal_usage_info_t*)calloc(1, sizeof(rgw_sal_usage_info_t));
+    if (!info) {
+        return RGW_SAL_ERR_NO_MEMORY;
+    }
+
+    *usage = info;
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 读取统计
+ *
+ * @param bucket 桶句柄
+ * @param stats 统计信息
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_read_stats(rgw_sal_bucket_t* bucket,
+                                    const rgw_sal_dpp_t* dpp,
+                                    void* stats) {
+    (void)dpp;
+
+    if (!bucket || !stats) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    /* 获取 IO 上下文 */
+    rados_ioctx_t ioctx;
+    int ret = get_bucket_pool_ioctx(bucket->driver, &ioctx);
+    if (ret != 0) {
+        return RGW_SAL_ERR_IO_ERROR;
+    }
+
+    /* 构建统计 OMAP 键 */
+    char stats_oid[256];
+    char stats_key[128];
+
+    if (impl->bucket_id) {
+        snprintf(stats_oid, sizeof(stats_oid), "%s%s", RGW_BUCKET_INFO_PREFIX, impl->bucket_id);
+    } else {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    snprintf(stats_key, sizeof(stats_key), "%s", RGW_BUCKET_STATS_KEY);
+
+    /* 读取统计信息 */
+    uint8_t* val = NULL;
+    size_t val_len = 0;
+    ret = rgw_omap_get(ioctx, stats_oid, stats_key, &val, &val_len);
+    if (ret == 0 && val) {
+        /* 解析统计信息 (简化实现) */
+        rgw_sal_bucket_stats_t* stats_info = (rgw_sal_bucket_stats_t*)stats;
+        if (val_len >= sizeof(uint64_t) * 3) {
+            memcpy(&stats_info->size, val, sizeof(uint64_t));
+            memcpy(&stats_info->object_count, val + sizeof(uint64_t), sizeof(uint64_t));
+            memcpy(&stats_info->num_objects, val + sizeof(uint64_t) * 2, sizeof(uint64_t));
+        }
+        free(val);
+    }
+
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 异步读取统计
+ *
+ * 简化实现：直接调用同步版本
+ */
+static int rados_bucket_read_stats_async(rgw_sal_bucket_t* bucket,
+                                         const rgw_sal_dpp_t* dpp,
+                                         void* cb) {
+    (void)bucket;
+    (void)dpp;
+    (void)cb;
+
+    /* 简化实现：不支持异步操作 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置配额
+ *
+ * @param bucket 桶句柄
+ * @param quota 配额信息
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_quota(rgw_sal_bucket_t* bucket,
+                                    const void* quota) {
+    (void)bucket;
+    (void)quota;
+
+    /* 简化实现：配额由用户级别管理 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取实例信息
+ *
+ * @param bucket 桶句柄
+ * @param bucket_id 实例 ID
+ * @param info 输出：实例信息
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_instance_info(rgw_sal_bucket_t* bucket,
+                                           const char* bucket_id,
+                                           void** info) {
+    (void)bucket;
+    (void)bucket_id;
+    (void)info;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 更新实例信息
+ *
+ * @param bucket 桶句柄
+ * @param info 实例信息
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_update_instance_info(rgw_sal_bucket_t* bucket,
+                                               const void* info) {
+    (void)bucket;
+    (void)info;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 移除实例
+ *
+ * @param bucket 桶句柄
+ * @param bucket_id 实例 ID
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_remove_instance(rgw_sal_bucket_t* bucket,
+                                          const char* bucket_id) {
+    (void)bucket;
+    (void)bucket_id;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取文件路径
+ *
+ * POSIX 驱动使用：获取桶对应的目录路径。
+ *
+ * @param bucket 桶句柄
+ * @param path 输出：路径
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_filepath(rgw_sal_bucket_t* bucket,
+                                       char** path) {
+    if (!bucket || !path) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl || !impl->name) {
+        return RGW_ERR_INVALID_ARG;
+    }
+
+    /* 构建路径：/桶名 */
+    size_t len = strlen(impl->name) + 2;
+    *path = (char*)malloc(len);
+    if (!*path) {
+        return RGW_ERR_OUT_OF_MEMORY;
+    }
+
+    snprintf(*path, len, "/%s", impl->name);
+    return RGW_OK;
+}
+
+/**
+ * @brief 获取对象实例
+ *
+ * @param bucket 桶句柄
+ * @param obj 对象句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_obj_instance(rgw_sal_bucket_t* bucket,
+                                           rgw_sal_object_t* obj) {
+    (void)bucket;
+    (void)obj;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 检查桶是否为空
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_check_empty(rgw_sal_bucket_t* bucket,
+                                     const rgw_sal_dpp_t* dpp,
+                                     rgw_sal_yield_t* y) {
+    (void)bucket;
+    (void)dpp;
+    (void)y;
+
+    /* 简化实现：假设不为空 */
+    /* TODO: 需要实际检查桶中是否有对象 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 检查索引
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_check_index(rgw_sal_bucket_t* bucket,
+                                     const rgw_sal_dpp_t* dpp,
+                                     rgw_sal_yield_t* y) {
+    (void)bucket;
+    (void)dpp;
+    (void)y;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 重建索引
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_rebuild_index(rgw_sal_bucket_t* bucket,
+                                        const rgw_sal_dpp_t* dpp,
+                                        rgw_sal_yield_t* y) {
+    (void)bucket;
+    (void)dpp;
+    (void)y;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 保存信息
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_put_info(rgw_sal_bucket_t* bucket,
+                                  const rgw_sal_dpp_t* dpp,
+                                  rgw_sal_yield_t* y) {
+    (void)dpp;
+    (void)y;
+
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    /* 使用 store 函数保存 */
+    return rados_bucket_store(bucket, NULL, NULL, false);
+}
+
+/**
+ * @brief 尝试刷新信息
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_try_refresh_info(rgw_sal_bucket_t* bucket,
+                                           const rgw_sal_dpp_t* dpp,
+                                           rgw_sal_yield_t* y) {
+    if (!bucket) {
+        return RGW_SAL_ERR_INVALID_ARG;
+    }
+
+    /* 重新加载桶信息 */
+    return rados_bucket_load(bucket, dpp, y);
+}
+
+/**
+ * @brief 读取放置规则
+ *
+ * @param bucket 桶句柄
+ * @param rule 输出：放置规则
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_read_placement(rgw_sal_bucket_t* bucket,
+                                         void** rule) {
+    (void)bucket;
+    (void)rule;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 更新放置规则
+ *
+ * @param bucket 桶句柄
+ * @param rule 放置规则
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_update_placement(rgw_sal_bucket_t* bucket,
+                                           const void* rule) {
+    (void)bucket;
+    (void)rule;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 删除放置规则
+ *
+ * @param bucket 桶句柄
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_delete_placement(rgw_sal_bucket_t* bucket) {
+    (void)bucket;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取标签
+ *
+ * @param bucket 桶句柄
+ * @param tags 输出：标签
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_tags(rgw_sal_bucket_t* bucket,
+                                  void** tags) {
+    (void)bucket;
+    (void)tags;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置标签
+ *
+ * @param bucket 桶句柄
+ * @param tags 标签
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_tags(rgw_sal_bucket_t* bucket,
+                                  void* tags) {
+    (void)bucket;
+    (void)tags;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取配置
+ *
+ * @param bucket 桶句柄
+ * @param config 输出：配置
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_config(rgw_sal_bucket_t* bucket,
+                                     void** config) {
+    (void)bucket;
+    (void)config;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置配置
+ *
+ * @param bucket 桶句柄
+ * @param config 配置
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_config(rgw_sal_bucket_t* bucket,
+                                     const void* config) {
+    (void)bucket;
+    (void)config;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取同步策略
+ *
+ * @param bucket 桶句柄
+ * @param policy 输出：同步策略
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_sync_policy(rgw_sal_bucket_t* bucket,
+                                          void** policy) {
+    (void)bucket;
+    (void)policy;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置同步策略
+ *
+ * @param bucket 桶句柄
+ * @param policy 同步策略
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_sync_policy(rgw_sal_bucket_t* bucket,
+                                          const void* policy) {
+    (void)bucket;
+    (void)policy;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取生命周期配置
+ *
+ * @param bucket 桶句柄
+ * @param lc 输出：生命周期配置
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_lc(rgw_sal_bucket_t* bucket,
+                                void** lc) {
+    (void)bucket;
+    (void)lc;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 设置生命周期配置
+ *
+ * @param bucket 桶句柄
+ * @param lc 生命周期配置
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_set_lc(rgw_sal_bucket_t* bucket,
+                                const void* lc) {
+    (void)bucket;
+    (void)lc;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取请求锁
+ *
+ * @param bucket 桶句柄
+ * @param lock 输出：锁
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_get_request_lock(rgw_sal_bucket_t* bucket,
+                                           void** lock) {
+    (void)bucket;
+    (void)lock;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 放置请求锁
+ *
+ * @param bucket 桶句柄
+ * @param lock 锁
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_put_request_lock(rgw_sal_bucket_t* bucket,
+                                           void* lock) {
+    (void)bucket;
+    (void)lock;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 完成请求锁
+ *
+ * @param bucket 桶句柄
+ * @param lock 锁
+ *
+ * @return 执行结果
+ */
+static int rados_bucket_finish_request_lock(rgw_sal_bucket_t* bucket,
+                                              void* lock) {
+    (void)bucket;
+    (void)lock;
+
+    /* 简化实现 */
+    return RGW_SAL_OK;
+}
+
+/*============================================================================
+ * 桶操作函数表
+ *============================================================================*/
+
+/**
  * @brief 获取桶操作函数表
  */
 rgw_sal_bucket_vtable_t* rgw_rados_get_bucket_vtable(void) {
     static rgw_sal_bucket_vtable_t vtable = {
-        .clone            = NULL,  /* TODO */
-        .destroy          = NULL,  /* TODO */
-        .get_name         = NULL,  /* TODO */
-        .get_tenant       = NULL,  /* TODO */
-        .get_marker       = NULL,  /* TODO */
-        .get_info         = NULL,  /* TODO */
-        .get_owner        = NULL,  /* TODO */
-        .get_attrs        = NULL,  /* TODO */
-        .set_attrs        = NULL,  /* TODO */
-        .list             = NULL,  /* TODO */
-        .load             = rados_bucket_load,
-        .store            = NULL,  /* TODO */
-        .remove           = NULL,  /* TODO */
-        .create           = rados_bucket_create,
-        .delete_bucket    = rados_bucket_delete,
-        .rename           = NULL,  /* TODO */
-        .set_acl          = NULL,  /* TODO */
-        .get_policy       = NULL,  /* TODO */
-        .set_policy       = NULL,  /* TODO */
-        .get_tag          = NULL,  /* TODO */
-        .set_tag          = NULL,  /* TODO */
-        .get_usage        = NULL,  /* TODO */
-        .read_stats       = NULL,  /* TODO */
-        .read_stats_async = NULL,  /* TODO */
-        .set_quota        = NULL,  /* TODO */
-        .get_instance_info = NULL,  /* TODO */
-        .update_instance_info = NULL,  /* TODO */
-        .remove_instance = NULL,  /* TODO */
-        .get_filepath     = NULL,  /* TODO */
-        .get_obj_instance = NULL,  /* TODO */
-        .check_empty      = NULL,  /* TODO */
-        .check_index      = NULL,  /* TODO */
-        .rebuild_index    = NULL,  /* TODO */
-        .put_info         = NULL,  /* TODO */
-        .try_refresh_info = NULL,  /* TODO */
-        .read_placement   = NULL,  /* TODO */
-        .update_placement = NULL,  /* TODO */
-        .delete_placement = NULL,  /* TODO */
-        .get_tags         = NULL,  /* TODO */
-        .set_tags         = NULL,  /* TODO */
-        .get_config       = NULL,  /* TODO */
-        .set_config       = NULL,  /* TODO */
-        .get_sync_policy  = NULL,  /* TODO */
-        .set_sync_policy  = NULL,  /* TODO */
-        .get_lc           = NULL,  /* TODO */
-        .set_lc           = NULL,  /* TODO */
-        .get_request_lock  = NULL,  /* TODO */
-        .put_request_lock  = NULL,  /* TODO */
-        .finish_request_lock = NULL,  /* TODO */
+        .clone               = rados_bucket_clone,
+        .destroy             = rados_bucket_destroy,
+        .get_name            = rados_bucket_get_name,
+        .get_tenant          = rados_bucket_get_tenant,
+        .get_marker          = rados_bucket_get_marker,
+        .get_info            = rados_bucket_get_info,
+        .get_owner           = rados_bucket_get_owner,
+        .get_attrs           = rados_bucket_get_attrs,
+        .set_attrs           = rados_bucket_set_attrs,
+        .list                = rados_bucket_list,
+        .load                = rados_bucket_load,
+        .store               = rados_bucket_store,
+        .remove              = rados_bucket_delete,
+        .create              = rados_bucket_create,
+        .delete_bucket       = rados_bucket_delete,
+        .rename              = rados_bucket_rename,
+        .set_acl             = rados_bucket_set_acl,
+        .get_policy          = rados_bucket_get_policy,
+        .set_policy          = rados_bucket_set_policy,
+        .get_tag             = rados_bucket_get_tag,
+        .set_tag             = rados_bucket_set_tag,
+        .get_usage           = rados_bucket_get_usage,
+        .read_stats          = rados_bucket_read_stats,
+        .read_stats_async    = rados_bucket_read_stats_async,
+        .set_quota           = rados_bucket_set_quota,
+        .get_instance_info   = rados_bucket_get_instance_info,
+        .update_instance_info = rados_bucket_update_instance_info,
+        .remove_instance     = rados_bucket_remove_instance,
+        .get_filepath        = rados_bucket_get_filepath,
+        .get_obj_instance    = rados_bucket_get_obj_instance,
+        .check_empty         = rados_bucket_check_empty,
+        .check_index         = rados_bucket_check_index,
+        .rebuild_index       = rados_bucket_rebuild_index,
+        .put_info            = rados_bucket_put_info,
+        .try_refresh_info    = rados_bucket_try_refresh_info,
+        .read_placement      = rados_bucket_read_placement,
+        .update_placement    = rados_bucket_update_placement,
+        .delete_placement    = rados_bucket_delete_placement,
+        .get_tags            = rados_bucket_get_tags,
+        .set_tags            = rados_bucket_set_tags,
+        .get_config          = rados_bucket_get_config,
+        .set_config          = rados_bucket_set_config,
+        .get_sync_policy     = rados_bucket_get_sync_policy,
+        .set_sync_policy     = rados_bucket_set_sync_policy,
+        .get_lc              = rados_bucket_get_lc,
+        .set_lc              = rados_bucket_set_lc,
+        .get_request_lock    = rados_bucket_get_request_lock,
+        .put_request_lock    = rados_bucket_put_request_lock,
+        .finish_request_lock = rados_bucket_finish_request_lock,
     };
 
     return &vtable;
