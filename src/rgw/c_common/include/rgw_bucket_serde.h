@@ -107,6 +107,7 @@ typedef struct {
  * 桶的所有者，可以是用户或账户。
  */
 typedef struct {
+    char* id;                   /**< 通用 ID (可用于 user_id 或 account_id) */
     uint32_t type;            /**< 类型: 0=user, 1=account */
     union {
         char* user_id;        /**< 用户 ID */
@@ -249,6 +250,24 @@ typedef struct {
     /** 对象锁定 */
     rgw_object_lock_t obj_lock;
 } rgw_bucket_info_t;
+
+/**
+ * @brief SAL 桶信息
+ *
+ * 简化版桶信息，用于 SAL 层。
+ */
+typedef struct {
+    rgw_bucket_id_t bucket;          /**< 桶标识 */
+    rgw_owner_t owner;              /**< 所有者 */
+    uint32_t flags;                  /**< 标志 */
+    uint64_t zonegroup;             /**< 区域组 */
+    char* zone_group;               /**< 区域组字符串 */
+    uint64_t placement_rule;         /**< 放置规则 */
+    int64_t creation_time;          /**< 创建时间 */
+    char* marker;                   /**< 桶标记 */
+    char* bucket_id;               /**< 桶 ID */
+    rgw_bucket_reshard_status_t reshard_status; /**< Resharding 状态 */
+} rgw_sal_bucket_info_t;
 
 /**
  * @brief 桶入口点

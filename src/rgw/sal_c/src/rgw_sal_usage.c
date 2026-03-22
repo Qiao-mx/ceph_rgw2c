@@ -806,15 +806,28 @@ int rgw_usage_trim_omap(rados_ioctx_t ioctx,
      * 由于 librados OMAP 不支持范围删除，我们需要:
      * 1. 先读取所有键
      * 2. 过滤出需要删除的键
-     * 3. 使用 omap_remove_keys 删除
+     * 3. 使用 omap_rm_keys2 删除
      *
-     * 简化实现：使用 OMAP 操作接口
+     * 简化实现：使用 OMAP 操作接口（兼容 librados 17.2.9）
      */
 
-    /* 获取迭代器 */
+    /* 获取迭代器 - 使用 read_op_omap_get_keys2 */
+    rados_read_op_t read_op = rados_create_read_op();
+    if (!read_op) {
+        return RGW_SAL_ERR_OUT_OF_MEMORY;
+    }
+
     rados_omap_iter_t iter;
-    int ret = rados_get_omap_keys2(ioctx, obj_name, NULL, NULL, 0, &iter);
-    if (ret < 0) {
+    unsigned char pmore = 1;
+    int op_ret = 0;
+
+    rados_read_op_omap_get_keys2(read_op, NULL, 256, &iter, &pmore, &op_ret);
+
+    /* 执行读取操作 */
+    int ret = rados_read_op_operate(read_op, ioctx, obj_name, 0);
+    rados_release_read_op(read_op);
+
+    if (ret < 0 || op_ret < 0) {
         /* 对象可能不存在，返回成功 */
         return RGW_SAL_OK;
     }
@@ -825,13 +838,11 @@ int rgw_usage_trim_omap(rados_ioctx_t ioctx,
     memset(keys_to_delete, 0, sizeof(keys_to_delete));
 
     char* key = NULL;
-    unsigned char* val = NULL;
-    size_t val_len = 0;
+    size_t key_len = 0;
 
-    while (keys_count < 256) {
-        ret = rados_get_omap_next(iter, &key, &val, &val_len);
-        if (ret < 0) break;
-        if (!key) break;
+    while (keys_count < 256 && pmore) {
+        ret = rados_omap_get_next2(iter, &key, NULL, &key_len, &op_ret);
+        if (ret < 0 || !key) break;
 
         /* 解析键中的 epoch 信息
          * 键格式: owner:bucket:epoch
@@ -848,23 +859,27 @@ int rgw_usage_trim_omap(rados_ioctx_t ioctx,
                 }
             }
         }
-
-        free(key);
-        key = NULL;
     }
 
     rados_omap_get_end(iter);
 
-    /* 删除收集的键 */
+    /* 删除收集的键 - 使用 write_op_omap_rm_keys2 */
     if (keys_count > 0) {
-        /* 创建键数组 */
+        /* 准备键数组和长度数组 */
         const char* keys[256];
+        size_t key_lens[256];
         for (int i = 0; i < keys_count; i++) {
             keys[i] = keys_to_delete[i];
+            key_lens[i] = strlen(keys_to_delete[i]);
         }
 
-        /* 使用 omap_remove_keys 删除 */
-        ret = rados_omap_remove_keys(ioctx, obj_name, keys, keys_count);
+        /* 创建写入操作 */
+        rados_write_op_t write_op = rados_create_write_op();
+        if (write_op) {
+            rados_write_op_omap_rm_keys2(write_op, keys, key_lens, keys_count);
+            rados_write_op_operate(write_op, ioctx, obj_name, NULL, 0);
+            rados_release_write_op(write_op);
+        }
 
         /* 释放字符串 */
         for (int i = 0; i < keys_count; i++) {
@@ -883,13 +898,27 @@ int rgw_usage_clear_omap(rados_ioctx_t ioctx) {
     /*
      * 清空整个 usage OMAP
      * 这需要读取所有键然后删除它们
+     * 使用兼容 librados 17.2.9 的 API
      */
 
-    /* 获取迭代器遍历所有键 */
+    /* 获取迭代器遍历所有键 - 使用 read_op_omap_get_keys2 */
+    rados_read_op_t read_op = rados_create_read_op();
+    if (!read_op) {
+        return RGW_SAL_ERR_OUT_OF_MEMORY;
+    }
+
     rados_omap_iter_t iter;
-    int ret = rados_get_omap_keys2(ioctx, "", NULL, NULL, 0, &iter);
-    if (ret < 0) {
-        /* 可能没有内容或迭代器不支持空键 */
+    unsigned char pmore = 1;
+    int op_ret = 0;
+
+    rados_read_op_omap_get_keys2(read_op, NULL, 256, &iter, &pmore, &op_ret);
+
+    /* 执行读取操作 - 使用默认的 usage 对象名 */
+    int ret = rados_read_op_operate(read_op, ioctx, ".rgw.usage", 0);
+    rados_release_read_op(read_op);
+
+    if (ret < 0 || op_ret < 0) {
+        /* 可能没有内容 */
         return RGW_SAL_OK;
     }
 
@@ -899,34 +928,36 @@ int rgw_usage_clear_omap(rados_ioctx_t ioctx) {
     memset(keys_to_delete, 0, sizeof(keys_to_delete));
 
     char* key = NULL;
-    unsigned char* val = NULL;
-    size_t val_len = 0;
+    size_t key_len = 0;
 
-    while (keys_count < 256) {
-        ret = rados_get_omap_next(iter, &key, &val, &val_len);
-        if (ret < 0) break;
-        if (!key) break;
+    while (keys_count < 256 && pmore) {
+        ret = rados_omap_get_next2(iter, &key, NULL, &key_len, &op_ret);
+        if (ret < 0 || !key) break;
 
         keys_to_delete[keys_count] = strdup(key);
         if (keys_to_delete[keys_count]) {
             keys_count++;
         }
-
-        free(key);
-        key = NULL;
     }
 
     rados_omap_get_end(iter);
 
-    /* 删除所有收集的键 */
+    /* 删除所有收集的键 - 使用 write_op_omap_rm_keys2 */
     if (keys_count > 0) {
         const char* keys[256];
+        size_t key_lens[256];
         for (int i = 0; i < keys_count; i++) {
             keys[i] = keys_to_delete[i];
+            key_lens[i] = strlen(keys_to_delete[i]);
         }
 
-        /* 需要指定对象名，这里使用默认的 usage 对象 */
-        ret = rados_omap_remove_keys(ioctx, ".rgw.usage", keys, keys_count);
+        /* 创建写入操作 */
+        rados_write_op_t write_op = rados_create_write_op();
+        if (write_op) {
+            rados_write_op_omap_rm_keys2(write_op, keys, key_lens, keys_count);
+            rados_write_op_operate(write_op, ioctx, ".rgw.usage", NULL, 0);
+            rados_release_write_op(write_op);
+        }
 
         /* 释放字符串 */
         for (int i = 0; i < keys_count; i++) {

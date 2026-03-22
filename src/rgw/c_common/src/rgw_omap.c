@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "rgw_omap.h"
 #include "rgw_errors.h"
@@ -731,8 +732,8 @@ int rgw_omap_write_ctx_assert(rgw_omap_write_ctx_t* ctx,
 /**
  * @brief 添加对象创建操作到写入上下文
  */
-int rgw_omap_write_ctx_create(rgw_omap_write_ctx_t* ctx,
-                                 rgw_omap_create_flags_t flags) {
+int rgw_omap_write_ctx_set_create_flags(rgw_omap_write_ctx_t* ctx,
+                                        rgw_omap_create_flags_t flags) {
     if (!ctx) {
         return RGW_ERR_INVALID_ARG;
     }
@@ -1201,8 +1202,9 @@ int64_t rgw_omap_count(rados_ioctx_t ioctx, const char* oid) {
 
     /* 获取键迭代器 */
     rados_omap_iter_t iter;
+    unsigned char pmore = 0;
     int prval = 0;
-    rados_read_op_omap_get_keys2(op, NULL, UINT64_MAX, &iter, &prval);
+    rados_read_op_omap_get_keys2(op, NULL, UINT64_MAX, &iter, &pmore, &prval);
 
     /* 执行操作 */
     int ret = rados_read_op_operate(op, ioctx, oid, 0);

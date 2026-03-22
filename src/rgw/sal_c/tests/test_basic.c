@@ -262,22 +262,26 @@ static int test_attrs_create_destroy(void) {
 
     printf("\n    Set 3 attributes");
 
-    /* 测试获取属性 - 新 API: 返回值指针, NULL 表示未找到 */
-    const uint8_t* out = NULL;
+    /* 测试获取属性 - API: 返回错误码, 通过输出参数返回值 */
+    uint8_t* out = NULL;
     size_t len = 0;
 
-    out = rgw_sal_attrs_get(attrs, "key1", &len);
-    TEST_EXPECT_NOT_NULL(out, "attrs_get key1 should return non-NULL");
+    ret = rgw_sal_attrs_get(attrs, "key1", &out, &len);
+    TEST_EXPECT(ret, 0, "attrs_get key1 should return 0");
     TEST_EXPECT(len, (size_t)6, "key1 value length should be 6");
     if (out) {
         TEST_EXPECT(memcmp(out, "value1", 6), 0, "key1 value should match");
+        free(out);
     }
 
-    out = rgw_sal_attrs_get(attrs, "key2", &len);
-    TEST_EXPECT_NOT_NULL(out, "attrs_get key2 should return non-NULL");
+    out = NULL;
+    ret = rgw_sal_attrs_get(attrs, "key2", &out, &len);
+    TEST_EXPECT(ret, 0, "attrs_get key2 should return 0");
+    if (out) { free(out); out = NULL; }
 
-    out = rgw_sal_attrs_get(attrs, "key3", &len);
-    TEST_EXPECT_NOT_NULL(out, "attrs_get key3 should return non-NULL");
+    ret = rgw_sal_attrs_get(attrs, "key3", &out, &len);
+    TEST_EXPECT(ret, 0, "attrs_get key3 should return 0");
+    if (out) { free(out); out = NULL; }
 
     printf("\n    Verified 3 attributes");
 
@@ -302,14 +306,15 @@ static int test_attrs_update(void) {
     ret = rgw_sal_attrs_set(attrs, "key", val2, strlen((char*)val2));
     TEST_EXPECT(ret, 0, "attrs_set update should return 0");
 
-    /* 验证更新后的值 - 新 API: 返回值指针 */
-    const uint8_t* out = NULL;
+    /* 验证更新后的值 - 新 API: 返回错误码 */
+    uint8_t* out = NULL;
     size_t len = 0;
-    out = rgw_sal_attrs_get(attrs, "key", &len);
-    TEST_EXPECT_NOT_NULL(out, "attrs_get should return non-NULL");
+    ret = rgw_sal_attrs_get(attrs, "key", &out, &len);
+    TEST_EXPECT(ret, 0, "attrs_get should return 0");
     TEST_EXPECT(len, (size_t)7, "updated value length should be 7");
     if (out) {
         TEST_EXPECT(memcmp(out, "updated", 7), 0, "updated value should match");
+        free(out);
     }
 
     printf("\n    Attribute update verified");
@@ -325,17 +330,20 @@ static int test_attrs_not_found(void) {
     rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
     TEST_EXPECT_NOT_NULL(attrs, "attrs_create should not return NULL");
 
-    /* 测试获取不存在的属性 - 新 API: 返回 NULL 表示未找到 */
-    const uint8_t* out = rgw_sal_attrs_get(attrs, "nonexistent", NULL);
+    /* 测试获取不存在的属性 - API: 返回非0错误码表示未找到 */
+    uint8_t* out = NULL;
+    size_t len = 0;
+    int ret = rgw_sal_attrs_get(attrs, "nonexistent", &out, &len);
 
-    if (out != NULL) {
-        printf("\n    ERROR: expected NULL for nonexistent key");
+    if (ret == 0) {
+        printf("\n    ERROR: expected error for nonexistent key");
+        if (out) free(out);
         rgw_sal_attrs_destroy(attrs);
-        TEST_FAIL("expected NULL for nonexistent key");
+        TEST_FAIL("expected error for nonexistent key");
         return 1;
     }
 
-    printf("\n    Correctly returned NULL for nonexistent key");
+    printf("\n    Correctly returned error for nonexistent key");
     rgw_sal_attrs_destroy(attrs);
     TEST_PASS();
     return 0;
@@ -352,13 +360,15 @@ static int test_attrs_binary_data(void) {
     int ret = rgw_sal_attrs_set(attrs, "binary_key", binary, sizeof(binary));
     TEST_EXPECT(ret, 0, "attrs_set binary should return 0");
 
-    /* 验证二进制数据 - 新 API */
+    /* 验证二进制数据 - API: 返回错误码 */
     size_t len = 0;
-    const uint8_t* out = rgw_sal_attrs_get(attrs, "binary_key", &len);
-    TEST_EXPECT_NOT_NULL(out, "attrs_get should return non-NULL");
+    uint8_t* out = NULL;
+    ret = rgw_sal_attrs_get(attrs, "binary_key", &out, &len);
+    TEST_EXPECT(ret, 0, "attrs_get should return 0");
     TEST_EXPECT(len, (size_t)sizeof(binary), "binary data length should match");
     if (out) {
         TEST_EXPECT(memcmp(out, binary, sizeof(binary)), 0, "binary data should match");
+        free(out);
     }
 
     printf("\n    Binary data (%zu bytes) stored and retrieved correctly", sizeof(binary));
@@ -391,17 +401,20 @@ static int test_attrs_many_keys(void) {
 
     printf("\n    Set %d attributes", num_keys);
 
-    /* 验证部分属性 - 新 API */
+    /* 验证部分属性 - API: 返回错误码 */
     int verified = 0;
     for (int i = 0; i < num_keys; i += 10) {
         snprintf(key_name, sizeof(key_name), "key_%04d", i);
         snprintf(value, sizeof(value), "value_%04d", i);
 
-        const uint8_t* out = rgw_sal_attrs_get(attrs, key_name, NULL);
-        if (out) {
+        uint8_t* out = NULL;
+        size_t len = 0;
+        int ret = rgw_sal_attrs_get(attrs, key_name, &out, &len);
+        if (ret == 0 && out) {
             if (memcmp(out, value, strlen(value)) == 0) {
                 verified++;
             }
+            free(out);
         }
     }
 

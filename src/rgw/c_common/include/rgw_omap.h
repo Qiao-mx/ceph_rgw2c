@@ -407,7 +407,9 @@ int rgw_omap_write_ctx_assert(rgw_omap_write_ctx_t* ctx,
                                  uint64_t expected_version);
 
 /**
- * @brief 添加对象创建操作到写入上下文
+ * @brief 设置 OMAP 对象创建标志
+ *
+ * 添加对象创建操作到写入上下文。
  *
  * @param ctx 写入上下文
  * @param flags 创建标志
@@ -416,7 +418,7 @@ int rgw_omap_write_ctx_assert(rgw_omap_write_ctx_t* ctx,
  * @retval 0 成功
  * @retval -EINVAL 参数无效
  */
-int rgw_omap_write_ctx_create(rgw_omap_write_ctx_t* ctx,
+int rgw_omap_write_ctx_set_create_flags(rgw_omap_write_ctx_t* ctx,
                                  rgw_omap_create_flags_t flags);
 
 /**

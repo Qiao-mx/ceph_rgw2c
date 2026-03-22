@@ -146,21 +146,30 @@ int rgw_sal_attrs_set(rgw_sal_attrs_t *attrs, const char *key,
     return 0;
 }
 
-const uint8_t *rgw_sal_attrs_get(const rgw_sal_attrs_t *attrs, const char *key,
-                                   size_t *len) {
+int rgw_sal_attrs_get(rgw_sal_attrs_t *attrs, const char *key,
+                       uint8_t **value, size_t *len) {
     if (!attrs || !key) {
-        return NULL;
+        return -1;
     }
 
     int idx = attrs_find_key(attrs, key);
     if (idx < 0) {
-        return NULL;
+        return -1;
+    }
+
+    if (value) {
+        uint8_t *copy = (uint8_t *)malloc(attrs->pairs[idx].value_len);
+        if (!copy) {
+            return -1;
+        }
+        memcpy(copy, attrs->pairs[idx].value, attrs->pairs[idx].value_len);
+        *value = copy;
     }
 
     if (len) {
         *len = attrs->pairs[idx].value_len;
     }
-    return attrs->pairs[idx].value;
+    return 0;
 }
 
 int rgw_sal_attrs_del(rgw_sal_attrs_t *attrs, const char *key) {

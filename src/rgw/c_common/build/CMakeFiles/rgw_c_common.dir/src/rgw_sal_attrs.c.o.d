@@ -47,4 +47,6 @@ CMakeFiles/rgw_c_common.dir/src/rgw_sal_attrs.c.o: \
  /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/rgw_sal.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/rgw_sal_types.h \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/rgw_user_serde.h

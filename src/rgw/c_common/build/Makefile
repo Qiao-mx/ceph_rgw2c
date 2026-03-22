@@ -601,6 +601,33 @@ examples/test_c_wrapper.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_c_wrapper.dir/build.make CMakeFiles/test_c_wrapper.dir/examples/test_c_wrapper.cpp.s
 .PHONY : examples/test_c_wrapper.cpp.s
 
+src/rgw_account_serde.o: src/rgw_account_serde.c.o
+.PHONY : src/rgw_account_serde.o
+
+# target to build an object file
+src/rgw_account_serde.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_account_serde.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o
+.PHONY : src/rgw_account_serde.c.o
+
+src/rgw_account_serde.i: src/rgw_account_serde.c.i
+.PHONY : src/rgw_account_serde.i
+
+# target to preprocess a source file
+src/rgw_account_serde.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_account_serde.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.i
+.PHONY : src/rgw_account_serde.c.i
+
+src/rgw_account_serde.s: src/rgw_account_serde.c.s
+.PHONY : src/rgw_account_serde.s
+
+# target to generate assembly for a file
+src/rgw_account_serde.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_account_serde.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.s
+.PHONY : src/rgw_account_serde.c.s
+
 src/rgw_acl_serde.o: src/rgw_acl_serde.c.o
 .PHONY : src/rgw_acl_serde.o
 
@@ -654,6 +681,33 @@ src/rgw_b64.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_b64.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_b64.c.s
 .PHONY : src/rgw_b64.c.s
+
+src/rgw_bucket_serde.o: src/rgw_bucket_serde.c.o
+.PHONY : src/rgw_bucket_serde.o
+
+# target to build an object file
+src/rgw_bucket_serde.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_bucket_serde.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o
+.PHONY : src/rgw_bucket_serde.c.o
+
+src/rgw_bucket_serde.i: src/rgw_bucket_serde.c.i
+.PHONY : src/rgw_bucket_serde.i
+
+# target to preprocess a source file
+src/rgw_bucket_serde.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_bucket_serde.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.i
+.PHONY : src/rgw_bucket_serde.c.i
+
+src/rgw_bucket_serde.s: src/rgw_bucket_serde.c.s
+.PHONY : src/rgw_bucket_serde.s
+
+# target to generate assembly for a file
+src/rgw_bucket_serde.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_bucket_serde.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.s
+.PHONY : src/rgw_bucket_serde.c.s
 
 src/rgw_buffer.o: src/rgw_buffer.c.o
 .PHONY : src/rgw_buffer.o
@@ -952,6 +1006,33 @@ src/rgw_errors.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_errors.c.s
 .PHONY : src/rgw_errors.c.s
 
+src/rgw_group_serde.o: src/rgw_group_serde.c.o
+.PHONY : src/rgw_group_serde.o
+
+# target to build an object file
+src/rgw_group_serde.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_group_serde.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o
+.PHONY : src/rgw_group_serde.c.o
+
+src/rgw_group_serde.i: src/rgw_group_serde.c.i
+.PHONY : src/rgw_group_serde.i
+
+# target to preprocess a source file
+src/rgw_group_serde.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_group_serde.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.i
+.PHONY : src/rgw_group_serde.c.i
+
+src/rgw_group_serde.s: src/rgw_group_serde.c.s
+.PHONY : src/rgw_group_serde.s
+
+# target to generate assembly for a file
+src/rgw_group_serde.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_group_serde.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.s
+.PHONY : src/rgw_group_serde.c.s
+
 src/rgw_hex.o: src/rgw_hex.c.o
 .PHONY : src/rgw_hex.o
 
@@ -978,6 +1059,141 @@ src/rgw_hex.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_hex.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_hex.c.s
 .PHONY : src/rgw_hex.c.s
+
+src/rgw_lifecycle.o: src/rgw_lifecycle.c.o
+.PHONY : src/rgw_lifecycle.o
+
+# target to build an object file
+src/rgw_lifecycle.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_lifecycle.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o
+.PHONY : src/rgw_lifecycle.c.o
+
+src/rgw_lifecycle.i: src/rgw_lifecycle.c.i
+.PHONY : src/rgw_lifecycle.i
+
+# target to preprocess a source file
+src/rgw_lifecycle.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_lifecycle.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.i
+.PHONY : src/rgw_lifecycle.c.i
+
+src/rgw_lifecycle.s: src/rgw_lifecycle.c.s
+.PHONY : src/rgw_lifecycle.s
+
+# target to generate assembly for a file
+src/rgw_lifecycle.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_lifecycle.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.s
+.PHONY : src/rgw_lifecycle.c.s
+
+src/rgw_multipart.o: src/rgw_multipart.c.o
+.PHONY : src/rgw_multipart.o
+
+# target to build an object file
+src/rgw_multipart.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_multipart.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o
+.PHONY : src/rgw_multipart.c.o
+
+src/rgw_multipart.i: src/rgw_multipart.c.i
+.PHONY : src/rgw_multipart.i
+
+# target to preprocess a source file
+src/rgw_multipart.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_multipart.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.i
+.PHONY : src/rgw_multipart.c.i
+
+src/rgw_multipart.s: src/rgw_multipart.c.s
+.PHONY : src/rgw_multipart.s
+
+# target to generate assembly for a file
+src/rgw_multipart.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_multipart.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.s
+.PHONY : src/rgw_multipart.c.s
+
+src/rgw_notification.o: src/rgw_notification.c.o
+.PHONY : src/rgw_notification.o
+
+# target to build an object file
+src/rgw_notification.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_notification.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o
+.PHONY : src/rgw_notification.c.o
+
+src/rgw_notification.i: src/rgw_notification.c.i
+.PHONY : src/rgw_notification.i
+
+# target to preprocess a source file
+src/rgw_notification.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_notification.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.i
+.PHONY : src/rgw_notification.c.i
+
+src/rgw_notification.s: src/rgw_notification.c.s
+.PHONY : src/rgw_notification.s
+
+# target to generate assembly for a file
+src/rgw_notification.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_notification.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.s
+.PHONY : src/rgw_notification.c.s
+
+src/rgw_oidc_serde.o: src/rgw_oidc_serde.c.o
+.PHONY : src/rgw_oidc_serde.o
+
+# target to build an object file
+src/rgw_oidc_serde.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_oidc_serde.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o
+.PHONY : src/rgw_oidc_serde.c.o
+
+src/rgw_oidc_serde.i: src/rgw_oidc_serde.c.i
+.PHONY : src/rgw_oidc_serde.i
+
+# target to preprocess a source file
+src/rgw_oidc_serde.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_oidc_serde.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.i
+.PHONY : src/rgw_oidc_serde.c.i
+
+src/rgw_oidc_serde.s: src/rgw_oidc_serde.c.s
+.PHONY : src/rgw_oidc_serde.s
+
+# target to generate assembly for a file
+src/rgw_oidc_serde.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_oidc_serde.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.s
+.PHONY : src/rgw_oidc_serde.c.s
+
+src/rgw_omap.o: src/rgw_omap.c.o
+.PHONY : src/rgw_omap.o
+
+# target to build an object file
+src/rgw_omap.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_omap.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o
+.PHONY : src/rgw_omap.c.o
+
+src/rgw_omap.i: src/rgw_omap.c.i
+.PHONY : src/rgw_omap.i
+
+# target to preprocess a source file
+src/rgw_omap.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_omap.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.i
+.PHONY : src/rgw_omap.c.i
+
+src/rgw_omap.s: src/rgw_omap.c.s
+.PHONY : src/rgw_omap.s
+
+# target to generate assembly for a file
+src/rgw_omap.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_omap.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.s
+.PHONY : src/rgw_omap.c.s
 
 src/rgw_oop.o: src/rgw_oop.c.o
 .PHONY : src/rgw_oop.o
@@ -1032,6 +1248,33 @@ src/rgw_policy_serde.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_policy_serde.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_policy_serde.c.s
 .PHONY : src/rgw_policy_serde.c.s
+
+src/rgw_sal.o: src/rgw_sal.c.o
+.PHONY : src/rgw_sal.o
+
+# target to build an object file
+src/rgw_sal.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_sal.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o
+.PHONY : src/rgw_sal.c.o
+
+src/rgw_sal.i: src/rgw_sal.c.i
+.PHONY : src/rgw_sal.i
+
+# target to preprocess a source file
+src/rgw_sal.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_sal.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.i
+.PHONY : src/rgw_sal.c.i
+
+src/rgw_sal.s: src/rgw_sal.c.s
+.PHONY : src/rgw_sal.s
+
+# target to generate assembly for a file
+src/rgw_sal.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common.dir/build.make CMakeFiles/rgw_c_common.dir/src/rgw_sal.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rgw_c_common_shared.dir/build.make CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.s
+.PHONY : src/rgw_sal.c.s
 
 src/rgw_sal_attrs.o: src/rgw_sal_attrs.c.o
 .PHONY : src/rgw_sal_attrs.o
@@ -1668,12 +1911,18 @@ help:
 	@echo "... examples/test_c_wrapper.o"
 	@echo "... examples/test_c_wrapper.i"
 	@echo "... examples/test_c_wrapper.s"
+	@echo "... src/rgw_account_serde.o"
+	@echo "... src/rgw_account_serde.i"
+	@echo "... src/rgw_account_serde.s"
 	@echo "... src/rgw_acl_serde.o"
 	@echo "... src/rgw_acl_serde.i"
 	@echo "... src/rgw_acl_serde.s"
 	@echo "... src/rgw_b64.o"
 	@echo "... src/rgw_b64.i"
 	@echo "... src/rgw_b64.s"
+	@echo "... src/rgw_bucket_serde.o"
+	@echo "... src/rgw_bucket_serde.i"
+	@echo "... src/rgw_bucket_serde.s"
 	@echo "... src/rgw_buffer.o"
 	@echo "... src/rgw_buffer.i"
 	@echo "... src/rgw_buffer.s"
@@ -1707,15 +1956,36 @@ help:
 	@echo "... src/rgw_errors.o"
 	@echo "... src/rgw_errors.i"
 	@echo "... src/rgw_errors.s"
+	@echo "... src/rgw_group_serde.o"
+	@echo "... src/rgw_group_serde.i"
+	@echo "... src/rgw_group_serde.s"
 	@echo "... src/rgw_hex.o"
 	@echo "... src/rgw_hex.i"
 	@echo "... src/rgw_hex.s"
+	@echo "... src/rgw_lifecycle.o"
+	@echo "... src/rgw_lifecycle.i"
+	@echo "... src/rgw_lifecycle.s"
+	@echo "... src/rgw_multipart.o"
+	@echo "... src/rgw_multipart.i"
+	@echo "... src/rgw_multipart.s"
+	@echo "... src/rgw_notification.o"
+	@echo "... src/rgw_notification.i"
+	@echo "... src/rgw_notification.s"
+	@echo "... src/rgw_oidc_serde.o"
+	@echo "... src/rgw_oidc_serde.i"
+	@echo "... src/rgw_oidc_serde.s"
+	@echo "... src/rgw_omap.o"
+	@echo "... src/rgw_omap.i"
+	@echo "... src/rgw_omap.s"
 	@echo "... src/rgw_oop.o"
 	@echo "... src/rgw_oop.i"
 	@echo "... src/rgw_oop.s"
 	@echo "... src/rgw_policy_serde.o"
 	@echo "... src/rgw_policy_serde.i"
 	@echo "... src/rgw_policy_serde.s"
+	@echo "... src/rgw_sal.o"
+	@echo "... src/rgw_sal.i"
+	@echo "... src/rgw_sal.s"
 	@echo "... src/rgw_sal_attrs.o"
 	@echo "... src/rgw_sal_attrs.i"
 	@echo "... src/rgw_sal_attrs.s"

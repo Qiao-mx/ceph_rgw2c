@@ -43,8 +43,8 @@ CMakeFiles/rgw_c_common.dir/src/rgw_sal_types.c.o: \
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
  /usr/include/strings.h \
- /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/rgw_sal_types.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdbool.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/rgw_sal_types.h

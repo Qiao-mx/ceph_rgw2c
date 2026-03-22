@@ -21,12 +21,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "rgw_sal_types.h"
+#include "rgw_user_serde.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* SAL 版本 */
 #define RGW_SAL_VERSION 1
+
+/* SAL 缓冲区大小 */
+#define RGW_SAL_BUF_SIZE 4096
 
 /* 错误码 */
 typedef enum rgw_sal_error {
@@ -37,7 +43,21 @@ typedef enum rgw_sal_error {
     RGW_SAL_ERR_EXISTS = -4,
     RGW_SAL_ERR_PERMISSION_DENIED = -5,
     RGW_SAL_ERR_ABORTED = -6,
-    RGW_SAL_ERR_IO = -7
+    RGW_SAL_ERR_IO = -7,
+    RGW_SAL_ERR_INVALID_ARG = -8,
+    RGW_SAL_ERR_OUT_OF_MEMORY = -9,
+    RGW_SAL_ERR_NOT_INITIALIZED = -10,
+    RGW_SAL_ERR_WRITE_ERROR = -11,
+    RGW_SAL_ERR_INTERNAL_ERROR = -12,
+    RGW_SAL_ERR_DATA_CORRUPTION = -13,
+    RGW_SAL_ERR_IO_ERROR = -14,
+    RGW_SAL_ERR_NOT_IMPLEMENTED = -15,
+    RGW_SAL_ERR_MFA_AUTH_FAILED = -16,
+    RGW_SAL_ERR_INDEX_ERROR = -17,
+    RGW_SAL_ERR_VERSION_CONFLICT = -18,
+    RGW_SAL_ERR_GENERIC = -19,
+    RGW_SAL_ERR_PARSE_ERROR = -20,
+    RGW_SAL_ERR_READ_ERROR = -21
 } rgw_sal_error_t;
 
 /* 前向声明 */
@@ -47,6 +67,12 @@ typedef struct rgw_sal_bucket rgw_sal_bucket_t;
 typedef struct rgw_sal_object rgw_sal_object_t;
 typedef struct rgw_sal_attrs rgw_sal_attrs_t;
 typedef struct rgw_sal_bucket_list rgw_sal_bucket_list_t;
+
+/* VTable 类型前向声明 */
+typedef struct rgw_sal_driver_vtable rgw_sal_driver_vtable_t;
+typedef struct rgw_sal_user_vtable rgw_sal_user_vtable_t;
+typedef struct rgw_sal_bucket_vtable rgw_sal_bucket_vtable_t;
+typedef struct rgw_sal_object_vtable rgw_sal_object_vtable_t;
 
 /* 用户 ID 结构 */
 typedef struct rgw_user {
@@ -75,37 +101,6 @@ rgw_user_t *rgw_user_copy(const rgw_user_t *user);
  * @brief 比较两个用户是否相等
  */
 int rgw_user_equal(const rgw_user_t *a, const rgw_user_t *b);
-
-/**
- * @brief 用户信息结构
- */
-typedef struct rgw_user_info {
-    rgw_user_t *user_id;
-    char *display_name;
-    char *user_email;
-    char *swift_subuser;
-    uint32_t max_buckets;
-    int32_t suspended;
-    uint32_t op_mask;
-    char *admin_token;
-    uint32_t default_placement;
-    char *default_storage_class;
-    char *placement_tags;
-    uint32_t bucket_quota;
-    uint32_t user_quota;
-    uint32_t temp_url_key;
-    /* ... 更多字段可扩展 */
-} rgw_user_info_t;
-
-/**
- * @brief 创建 rgw_user_info
- */
-rgw_user_info_t *rgw_user_info_create(void);
-
-/**
- * @brief 释放 rgw_user_info
- */
-void rgw_user_info_destroy(rgw_user_info_t *info);
 
 /* 属性映射 - 内部实现 */
 typedef struct rgw_sal_attrs {
@@ -138,8 +133,15 @@ int rgw_sal_attrs_set(rgw_sal_attrs_t *attrs, const char *key, const uint8_t *va
 
 /**
  * @brief 获取属性
+ *
+ * @param attrs 属性映射
+ * @param key 属性键
+ * @param value 输出：属性值（调用者需要 free）
+ * @param len 输出：值长度
+ * @return 错误码，0 表示成功
  */
-const uint8_t *rgw_sal_attrs_get(const rgw_sal_attrs_t *attrs, const char *key, size_t *len);
+int rgw_sal_attrs_get(rgw_sal_attrs_t *attrs, const char *key,
+                      uint8_t **value, size_t *len);
 
 /**
  * @brief 删除属性
@@ -161,6 +163,8 @@ struct rgw_sal_bucket_list {
     void *buckets;  /* 内部实现: 使用容器 */
     char *next_marker;
     bool truncated;
+    size_t count;              /**< 桶数量 */
+    bool is_truncated;         /**< 是否还有更多数据 */
 };
 
 /**
@@ -216,6 +220,11 @@ typedef struct rgw_sal_driver_ops {
 struct rgw_sal_driver {
     const rgw_sal_driver_ops_t *ops;
     void *context;
+    void *impl;  /**< RADOS-specific implementation */
+    rgw_sal_user_vtable_t *user_vtable;  /**< User vtable */
+    rgw_sal_driver_vtable_t *vtable;  /**< General vtable */
+    rgw_sal_bucket_vtable_t *bucket_vtable;  /**< Bucket vtable */
+    rgw_sal_object_vtable_t *object_vtable;  /**< Object vtable */
 };
 
 /**
@@ -255,6 +264,8 @@ struct rgw_sal_user {
     const rgw_sal_user_ops_t *ops;
     rgw_user_t *user_id;
     void *driver;
+    void *impl;  /**< RADOS-specific implementation */
+    rgw_sal_user_vtable_t *vtable;  /**< Virtual function table */
 };
 
 /**
@@ -303,6 +314,9 @@ struct rgw_sal_bucket {
     char *marker;
     char *bucket_id;
     void *driver;
+    void *impl;  /**< RADOS-specific implementation */
+    rgw_sal_bucket_vtable_t *vtable;  /**< Virtual function table */
+    rgw_sal_bucket_vtable_t *bucket_vtable;  /**< Bucket vtable */
 };
 
 /**
@@ -351,6 +365,8 @@ struct rgw_sal_object {
     char *key;
     uint64_t size;
     void *driver;
+    void *impl;  /**< RADOS-specific implementation */
+    rgw_sal_object_vtable_t *vtable;  /**< Virtual function table */
 };
 
 /**

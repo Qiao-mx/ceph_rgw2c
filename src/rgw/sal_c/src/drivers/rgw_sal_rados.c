@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <errno.h>
 #include <rados/librados.h>
 
 #include "rgw_sal.h"
@@ -31,7 +32,29 @@
 #include "rgw_policy_serde.h"
 
 /*============================================================================
- * RADOS 驱动内部结构
+ * RADOS 驱动常量定义
+ *============================================================================*/
+
+/**
+ * @brief OMAP 键名常量
+ */
+#define RGW_BUCKET_ACL_OMAP_KEY "acl"
+#define RGW_BUCKET_POLICY_OMAP_KEY "policy"
+#define RGW_BUCKET_STATS_OMAP_KEY "stats"
+
+/*============================================================================
+ * 函数前向声明
+ *============================================================================*/
+
+/* 桶 ACL/策略 OMAP 对象名构建函数 */
+static int rados_bucket_acl_make_omap_oid(const char* bucket_name,
+                                          char* buf, size_t buf_size);
+
+/* 对象 OID 构建函数 */
+static int rados_build_object_oid(rgw_sal_object_t* obj, char* oid, size_t oid_size);
+
+/**
+ * @brief RADOS 驱动内部结构
  *============================================================================*/
 
 /**
@@ -312,11 +335,11 @@ int parse_user_from_buffer(rados_user_impl_t* impl, const uint8_t* data, size_t 
             } else if (strcmp(key, "quota_check_on_raw") == 0) {
                 impl->quota_info.check_on_raw = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
             } else if (strcmp(key, "quota_bytes") == 0) {
-                free(impl->quota_info.quota_bytes);
-                impl->quota_info.quota_bytes = strdup(value);
+                /* quota_bytes 是 uint64_t 类型，使用 strtoull 解析 */
+                impl->quota_info.quota_bytes = strtoull(value, NULL, 10);
             } else if (strcmp(key, "quota_max_objects") == 0) {
-                free(impl->quota_info.quota_max_objects);
-                impl->quota_info.quota_max_objects = strdup(value);
+                /* quota_max_objects 是 uint64_t 类型，使用 strtoull 解析 */
+                impl->quota_info.quota_max_objects = strtoull(value, NULL, 10);
             } else if (strcmp(key, "user_caps") == 0) {
                 free(impl->user_caps.caps);
                 impl->user_caps.caps = strdup(value);
@@ -358,8 +381,8 @@ uint8_t* serialize_user_to_buffer(rados_user_impl_t* impl, size_t* buf_size) {
     if (impl->display_name) estimate += strlen(impl->display_name) + 20;
     if (impl->email) estimate += strlen(impl->email) + 10;
     if (impl->ns) estimate += strlen(impl->ns) + 10;
-    if (impl->quota_info.quota_bytes) estimate += strlen(impl->quota_info.quota_bytes) + 20;
-    if (impl->quota_info.quota_max_objects) estimate += strlen(impl->quota_info.quota_max_objects) + 25;
+    /* quota_bytes 和 quota_max_objects 是 uint64_t，每个最多 20 位数字 */
+    estimate += 40;  /* 两个 uint64_t 的序列化空间 */
     if (impl->user_caps.caps) estimate += strlen(impl->user_caps.caps) + 15;
 
     /* 分配缓冲区 */
@@ -403,15 +426,14 @@ uint8_t* serialize_user_to_buffer(rados_user_impl_t* impl, size_t* buf_size) {
     ret = snprintf(buffer + offset, estimate - offset, "quota_check_on_raw=%d\n", impl->quota_info.check_on_raw ? 1 : 0);
     if (ret > 0) offset += (size_t)ret;
 
-    if (impl->quota_info.quota_bytes) {
-        ret = snprintf(buffer + offset, estimate - offset, "quota_bytes=%s\n", impl->quota_info.quota_bytes);
-        if (ret > 0) offset += (size_t)ret;
-    }
+    /* 序列化配额字段 - quota_bytes 和 quota_max_objects 是 uint64_t */
+    ret = snprintf(buffer + offset, estimate - offset, "quota_bytes=%llu\n",
+                   (unsigned long long)impl->quota_info.quota_bytes);
+    if (ret > 0) offset += (size_t)ret;
 
-    if (impl->quota_info.quota_max_objects) {
-        ret = snprintf(buffer + offset, estimate - offset, "quota_max_objects=%s\n", impl->quota_info.quota_max_objects);
-        if (ret > 0) offset += (size_t)ret;
-    }
+    ret = snprintf(buffer + offset, estimate - offset, "quota_max_objects=%llu\n",
+                   (unsigned long long)impl->quota_info.quota_max_objects);
+    if (ret > 0) offset += (size_t)ret;
 
     if (impl->user_caps.caps) {
         ret = snprintf(buffer + offset, estimate - offset, "user_caps=%s\n", impl->user_caps.caps);
@@ -1041,7 +1063,7 @@ static int rados_driver_list_buckets(rgw_sal_driver_t* driver,
         free(bucket_id);
 
         /* 添加到结果列表 */
-        list->buckets[list->count] = sal_bucket_info;
+        ((rgw_sal_bucket_info_t**)list->buckets)[list->count] = sal_bucket_info;
         list->count++;
 
         /* 如果达到最大数量，停止 */
@@ -1298,16 +1320,16 @@ static int rados_user_load(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp, rgw_s
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->uid.id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
 
     uint8_t* data = NULL;
     size_t data_len = 0;
 
-    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user->uid.id, &data, &data_len);
+    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user->user_id->id, &data, &data_len);
     if (ret < 0) return RGW_SAL_ERR_NOT_FOUND;
 
     ret = parse_user_from_buffer(impl, data, data_len);
@@ -1327,17 +1349,17 @@ static int rados_user_store(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->uid.id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
 
     size_t buf_size = 0;
     uint8_t* buffer = serialize_user_to_buffer(impl, &buf_size);
     if (!buffer) return RGW_SAL_ERR_INTERNAL_ERROR;
 
-    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user->uid.id, buffer, buf_size);
+    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user->user_id->id, buffer, buf_size, exclusive);
     rgw_sal_free_buffer(buffer);
 
     if (ret < 0) {
@@ -1353,13 +1375,13 @@ static int rados_user_store(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
 static int rados_user_remove(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y) {
     if (!user) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->uid.id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
 
-    int ret = rgw_omap_del(driver_impl->users_uid_ioctx, bucket, user->uid.id);
+    int ret = rgw_omap_del(driver_impl->users_uid_ioctx, bucket, user->user_id->id);
     if (ret < 0) return RGW_SAL_ERR_NOT_FOUND;
 
     (void)dpp; (void)y;
@@ -1372,17 +1394,17 @@ static int rados_user_read_attrs(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->uid.id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
 
     /* 先读取基本用户数据 */
     uint8_t* data = NULL;
     size_t data_len = 0;
 
-    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user->uid.id, &data, &data_len);
+    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user->user_id->id, &data, &data_len);
     if (ret < 0) return RGW_SAL_ERR_NOT_FOUND;
 
     /* 解析用户数据到 impl */
@@ -1402,7 +1424,7 @@ static int rados_user_merge_and_store_attrs(rgw_sal_user_t* user, rgw_sal_attrs_
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 获取当前属性，如果不存在则创建 */
@@ -1424,9 +1446,9 @@ static int rados_user_merge_and_store_attrs(rgw_sal_user_t* user, rgw_sal_attrs_
     if (!buffer) return RGW_SAL_ERR_INTERNAL_ERROR;
 
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->uid.id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
 
-    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user->uid.id, buffer, buf_size);
+    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user->user_id->id, buffer, buf_size, false);
     rgw_sal_free_buffer(buffer);
 
     if (ret < 0) return RGW_SAL_ERR_WRITE_ERROR;
@@ -1516,7 +1538,7 @@ static int rados_user_read_usage(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -1672,7 +1694,7 @@ static int rados_user_trim_usage(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -1798,7 +1820,7 @@ static int rados_user_verify_mfa(rgw_sal_user_t* user, const char* mfa_serial,
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -1863,7 +1885,7 @@ static int rados_user_list_groups(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp
     rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)user->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -2206,28 +2228,21 @@ static rgw_sal_bucket_info_t* rados_bucket_get_info(rgw_sal_bucket_t* bucket) {
     rgw_sal_bucket_info_t* info = (rgw_sal_bucket_info_t*)calloc(1, sizeof(rgw_sal_bucket_info_t));
     if (!info) return NULL;
 
-    /* 从 impl 填充信息 */
+    /* 从 impl 填充信息 - 使用 bucket 成员 */
     if (impl->name) info->bucket.name = strdup(impl->name);
-    if (impl->tenant) info->bucket.tenant = strdup(impl->tenant);
-    if (impl->marker) info->bucket.marker = strdup(impl->marker);
-    if (impl->bucket_id) info->bucket.bucket_id = strdup(impl->bucket_id);
-    if (impl->owner_id) info->owner = strdup(impl->owner_id);
-
-    /* 如果 impl 有 attrs，复制它们 */
-    if (impl->attrs && impl->attrs->count > 0) {
-        info->attrs = rgw_sal_attrs_create();
-        if (info->attrs) {
-            for (size_t i = 0; i < impl->attrs->count; i++) {
-                rgw_sal_attrs_set(info->attrs,
-                                 impl->attrs->pairs[i].key,
-                                 impl->attrs->pairs[i].value,
-                                 impl->attrs->pairs[i].value_len);
-            }
-        }
+    if (impl->tenant) info->bucket.name = strdup(impl->tenant);  /* 覆盖 name */
+    if (impl->marker) info->marker = strdup(impl->marker);
+    if (impl->bucket_id) info->bucket_id = strdup(impl->bucket_id);
+    /* 设置 owner */
+    if (impl->owner_id) {
+        info->owner.id = strdup(impl->owner_id);
+        info->owner.type = 0;  /* user type */
     }
 
+    /* 注意: rgw_sal_bucket_info_t 没有 attrs 成员，跳过 */
+
     /* 从 RADOS OMAP 加载更详细的信息 */
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (driver_impl && driver_impl->ioctxs_initialized) {
         /* 构建桶信息对象名 */
         char obj_name[256];
@@ -2248,33 +2263,29 @@ static rgw_sal_bucket_info_t* rados_bucket_get_info(rgw_sal_bucket_t* bucket) {
                               "info", &val, &val_len);
         if (ret == 0 && val && val_len > 0) {
             /* 使用 rgw_bucket_serde.h 中的解码函数解析桶信息 */
-            rgw_sal_bucket_info_t* decoded = rgw_bucket_info_decode(val, val_len);
-            if (decoded) {
+            rgw_bucket_info_t decoded;
+            ret = rgw_bucket_info_decode(val, val_len, &decoded);
+            if (ret == 0) {
                 /* 复制解码后的信息到 info */
-                if (decoded->bucket.name) {
+                if (decoded.bucket.name) {
                     free(info->bucket.name);
-                    info->bucket.name = strdup(decoded->bucket.name);
+                    info->bucket.name = strdup(decoded.bucket.name);
                 }
-                if (decoded->bucket.tenant) {
-                    free(info->bucket.tenant);
-                    info->bucket.tenant = strdup(decoded->bucket.tenant);
+                if (decoded.bucket.marker) {
+                    free(info->marker);
+                    info->marker = strdup(decoded.bucket.marker);
                 }
-                if (decoded->bucket.marker) {
-                    free(info->bucket.marker);
-                    info->bucket.marker = strdup(decoded->bucket.marker);
+                if (decoded.bucket.bucket_id) {
+                    free(info->bucket_id);
+                    info->bucket_id = strdup(decoded.bucket.bucket_id);
                 }
-                if (decoded->bucket.bucket_id) {
-                    free(info->bucket.bucket_id);
-                    info->bucket.bucket_id = strdup(decoded->bucket.bucket_id);
+                if (decoded.owner.id) {
+                    free((void*)info->owner.id);
+                    info->owner.id = strdup(decoded.owner.id);
+                    info->owner.type = decoded.owner.type;
                 }
-                if (decoded->owner) {
-                    free(info->owner);
-                    info->owner = strdup(decoded->owner);
-                }
-                info->creation_time = decoded->creation_time;
-                info->mtime = decoded->mtime;
-
-                rgw_bucket_info_destroy(decoded);
+                info->creation_time = decoded.creation_time;
+                /* 注: decoded 没有 mtime 成员，跳过 */
             }
             free(val);
         }
@@ -2293,7 +2304,7 @@ static rgw_sal_user_t* rados_bucket_get_owner(rgw_sal_bucket_t* bucket) {
     rgw_sal_user_id_t uid = {0};
     uid.id = impl->owner_id;
 
-    return bucket->driver->vtable->get_user(bucket->driver, &uid);
+    return ((rgw_sal_driver_t*)bucket->driver)->vtable->get_user((rgw_sal_driver_t*)bucket->driver, &uid);
 }
 
 static rgw_sal_attrs_t* rados_bucket_get_attrs(rgw_sal_bucket_t* bucket) {
@@ -2329,7 +2340,7 @@ static int rados_bucket_list(rgw_sal_bucket_t* bucket,
                               const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y) {
     if (!bucket || !result) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -2431,25 +2442,27 @@ static int rados_bucket_list(rgw_sal_bucket_t* bucket,
         }
 
         /* 创建对象条目 */
-        rgw_sal_object_entry_t* entry = &list->objects[list->count];
+        rgw_sal_object_entry_t* entry = &((rgw_sal_object_entry_t*)list->objects)[list->count];
 
-        /* 解析对象名获取 key 和 instance */
+        /* 解析对象名获取 name 和 instance */
         const char* instance = strchr(obj_name, '_');
         if (instance) {
             size_t name_len = instance - obj_name;
-            entry->key.name = (char*)malloc(name_len + 1);
-            if (entry->key.name) {
-                memcpy(entry->key.name, obj_name, name_len);
-                entry->key.name[name_len] = '\0';
-                entry->key.instance = strdup(instance + 1);
+            entry->name = (char*)malloc(name_len + 1);
+            if (entry->name) {
+                memcpy(entry->name, obj_name, name_len);
+                entry->name[name_len] = '\0';
+                entry->instance = strdup(instance + 1);
             }
         } else {
-            entry->key.name = strdup(obj_name);
-            entry->key.instance = NULL;
+            entry->name = strdup(obj_name);
+            entry->instance = NULL;
         }
 
-        /* 检查是否被截断 */
-        entry->is_truncated = false;
+        /* 解析对象名获取 key */
+        entry->key = strdup(obj_name);
+
+        /* 注: rgw_sal_object_entry_t 没有 is_truncated 成员 */
         list->count++;
         entries_read++;
     }
@@ -2481,7 +2494,7 @@ static int rados_bucket_load(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 构建 OMAP 键 */
@@ -2539,7 +2552,7 @@ static int rados_bucket_store(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 构建桶信息 */
@@ -2572,7 +2585,7 @@ static int rados_bucket_store(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp
         return RGW_SAL_ERR_INVALID_ARG;
     }
 
-    ret = rgw_omap_set(driver_impl->buckets_index_ioctx, omap_pool, omap_key, buffer, buf_size);
+    ret = rgw_omap_set(driver_impl->buckets_index_ioctx, omap_pool, omap_key, buffer, buf_size, exclusive);
     rgw_sal_free_buffer(buffer);
 
     if (ret < 0) {
@@ -2593,7 +2606,7 @@ static int rados_bucket_remove(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char omap_key[RGW_SAL_BUF_SIZE];
@@ -2631,7 +2644,7 @@ static int rados_bucket_create(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 生成桶 ID 和 marker (UUID) */
@@ -2672,7 +2685,7 @@ static int rados_bucket_create(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
     rgw_bucket_entrypoint_make_omap_key(impl->tenant, impl->name, entrypoint_key, sizeof(entrypoint_key));
 
     int ret = rgw_omap_set(driver_impl->buckets_index_ioctx, omap_pool, entrypoint_key,
-                           entrypoint_buf, entrypoint_len);
+                           entrypoint_buf, entrypoint_len, false);
     if (ret < 0 && ret != -EEXIST) return RGW_SAL_ERR_WRITE_ERROR;
 
     /* 如果需要创建桶实例对象 */
@@ -2689,7 +2702,7 @@ static int rados_bucket_create(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
         info.owner.user_id = impl->owner_id ? strdup(impl->owner_id) : NULL;
         info.creation_time = (int64_t)time(NULL);
         info.has_instance_obj = true;
-        info.layout = rgw_bucket_get_default_layout(0);
+        /* 注: rgw_bucket_info_t 没有 layout 成员，跳过 */
 
         /* 编码并存储桶信息 */
         uint8_t* info_buf = NULL;
@@ -2703,7 +2716,7 @@ static int rados_bucket_create(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
         rgw_bucket_info_make_omap_key(impl->bucket_id, bucket_key, sizeof(bucket_key));
 
         ret = rgw_omap_set(driver_impl->buckets_index_ioctx, omap_pool, bucket_key,
-                           info_buf, info_buf_size);
+                           info_buf, info_buf_size, false);
         rgw_sal_free_buffer(info_buf);
 
         if (ret < 0 && ret != -EEXIST) return RGW_SAL_ERR_WRITE_ERROR;
@@ -2724,7 +2737,7 @@ static int rados_bucket_delete_bucket(rgw_sal_bucket_t* bucket, const rgw_sal_dp
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char omap_pool[64] = ".rgw.meta.buckets.index";
@@ -2795,7 +2808,7 @@ static int rados_bucket_rename(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     char omap_pool[64] = ".rgw.meta.buckets.index";
@@ -2830,7 +2843,7 @@ static int rados_bucket_rename(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dp
                     rgw_bucket_entrypoint_make_omap_key(impl->tenant, new_name,
                                                          new_key, sizeof(new_key));
                     rgw_omap_set(driver_impl->buckets_index_ioctx, omap_pool,
-                                  new_key, new_buf, new_len);
+                                  new_key, new_buf, new_len, false);
                 }
 
                 rgw_bucket_entrypoint_free_members(&entrypoint);
@@ -2863,7 +2876,7 @@ static int rados_bucket_set_acl(rgw_sal_bucket_t* bucket, void* acl,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -2946,7 +2959,7 @@ static int rados_bucket_get_policy(rgw_sal_bucket_t* bucket, void** policy,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3030,7 +3043,7 @@ static int rados_bucket_set_policy(rgw_sal_bucket_t* bucket, void* policy,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3110,21 +3123,6 @@ static int rados_bucket_set_policy(rgw_sal_bucket_t* bucket, void* policy,
  *============================================================================*/
 
 /**
- * @brief 桶统计信息 OMAP 键名
- */
-#define RGW_BUCKET_STATS_OMAP_KEY "stats"
-
-/**
- * @brief 桶 ACL OMAP 键名
- */
-#define RGW_BUCKET_ACL_OMAP_KEY "acl"
-
-/**
- * @brief 桶策略 OMAP 键名
- */
-#define RGW_BUCKET_POLICY_OMAP_KEY "policy"
-
-/**
  * @brief 构建桶 ACL/策略 OMAP 对象名
  *
  * 格式: .rgw.meta.buckets.acl.{bucket_id}
@@ -3194,9 +3192,8 @@ static int rados_parse_bucket_stats(const uint8_t* data, size_t data_len,
     stats->size_rounded = count > 1 ? values[1] : 0;
     stats->object_count = count > 2 ? values[2] : 0;
     stats->num_objects = count > 3 ? values[3] : 0;
-    stats->num_shards = count > 4 ? values[4] : 0;
-    stats->max_marker = count > 5 ? values[5] : 0;
-    stats->mtime = count > 6 ? (int64_t)values[6] : 0;
+    stats->num_shards = count > 4 ? (int)values[4] : 0;
+    /* 注: max_marker 是数组，不能直接赋值整数 */
 
     return RGW_SAL_OK;
 }
@@ -3209,7 +3206,7 @@ static int rados_bucket_get_usage(rgw_sal_bucket_t* bucket, void** usage,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3329,7 +3326,7 @@ static int rados_bucket_read_stats(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3416,7 +3413,7 @@ static int rados_bucket_complete_stats(rgw_sal_bucket_t* bucket, const rgw_sal_d
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3508,7 +3505,7 @@ static int rados_bucket_sync(rgw_sal_bucket_t* bucket, const rgw_sal_dpp_t* dpp,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->ioctxs_initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3543,10 +3540,14 @@ static int rados_bucket_read_stats_async(rgw_sal_bucket_t* bucket,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
+
+    /* 分配统计信息结构 */
+    rgw_sal_bucket_stats_t* stats = (rgw_sal_bucket_stats_t*)calloc(1, sizeof(rgw_sal_bucket_stats_t));
+    if (!stats) return RGW_SAL_ERR_OUT_OF_MEMORY;
 
     /* 确保桶已加载 */
     if (!impl->loaded) {
@@ -3618,7 +3619,7 @@ static int rados_bucket_drain(rgw_sal_bucket_t* bucket,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3676,7 +3677,7 @@ static int rados_bucket_check_object_index(rgw_sal_bucket_t* bucket,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3808,7 +3809,7 @@ static int rados_bucket_fix_object_index(rgw_sal_bucket_t* bucket,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -3941,7 +3942,7 @@ static int rados_bucket_check_bucket_index(rgw_sal_bucket_t* bucket,
     rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -4200,7 +4201,7 @@ static rgw_sal_attrs_t* rados_object_get_attrs(rgw_sal_object_t* obj) {
     obj_impl->attrs = rgw_sal_attrs_create();
     if (!obj_impl->attrs) return NULL;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return obj_impl->attrs;
 
     /* 获取数据池 IO 上下文 */
@@ -4224,41 +4225,19 @@ static rgw_sal_attrs_t* rados_object_get_attrs(rgw_sal_object_t* obj) {
     }
 
     /* 获取所有 xattr */
-    char* xattr_buf = NULL;
-    size_t xattr_len = rados_getxattrs(ioctx, oid, NULL, 0);
-    if (xattr_len > 0 && xattr_len < 100 * 1024) {  /* 限制最大 100KB */
-        xattr_buf = (char*)malloc(xattr_len);
-        if (xattr_buf) {
-            rados_getxattrs(ioctx, oid, xattr_buf, xattr_len);
-
-            /* 解析 xattr 缓冲区 (格式: key1\0value1\0key2\0value2\0...) */
-            char* p = xattr_buf;
-            while (p < xattr_buf + xattr_len) {
-                char* key = p;
-                size_t key_len = strlen(key);
-                p += key_len + 1;
-
-                if (p < xattr_buf + xattr_len) {
-                    char* value = p;
-                    size_t value_len = 0;
-                    /* 查找下一个 key 或结束 */
-                    char* next_key = (char*)memchr(p, '\0', xattr_buf + xattr_len - p);
-                    if (next_key) {
-                        value_len = next_key - p;
-                        p = next_key + 1;
-                    } else {
-                        value_len = xattr_buf + xattr_len - p;
-                        p = xattr_buf + xattr_len;
-                    }
-
-                    /* 添加到属性集合 */
-                    if (key_len > 0) {
-                        rgw_sal_attrs_set(obj_impl->attrs, key, (uint8_t*)value, value_len);
-                    }
-                }
+    rados_xattrs_iter_t iter;
+    int ret = rados_getxattrs(ioctx, oid, &iter);
+    if (ret == 0) {
+        /* 使用迭代器获取 xattr */
+        const char* name;
+        const char* val;
+        size_t val_len;
+        while (rados_getxattrs_next(iter, &name, &val, &val_len) == 0) {
+            if (name && val) {
+                rgw_sal_attrs_set(obj_impl->attrs, name, (uint8_t*)val, val_len);
             }
-            free(xattr_buf);
         }
+        rados_getxattrs_end(iter);
     }
 
     return obj_impl->attrs;
@@ -4270,7 +4249,7 @@ static int rados_object_set_attrs(rgw_sal_object_t* obj, rgw_sal_attrs_t* attrs)
     rados_object_impl_t* obj_impl = (rados_object_impl_t*)obj->impl;
     if (!obj_impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 获取数据池 IO 上下文 */
@@ -4319,7 +4298,7 @@ static int rados_object_read(rgw_sal_object_t* obj, int64_t offset, int64_t end,
     rados_object_impl_t* obj_impl = (rados_object_impl_t*)obj->impl;
     if (!obj_impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 获取数据池 IO 上下文 */
@@ -4381,7 +4360,7 @@ static int rados_object_write(rgw_sal_object_t* obj, int64_t offset, int64_t siz
     rados_object_impl_t* obj_impl = (rados_object_impl_t*)obj->impl;
     if (!obj_impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 获取数据池 IO 上下文 */
@@ -4440,7 +4419,7 @@ static int rados_object_delete_obj(rgw_sal_object_t* obj, uint32_t flags,
     rados_object_impl_t* obj_impl = (rados_object_impl_t*)obj->impl;
     if (!obj_impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 获取数据池 IO 上下文 */
@@ -4519,7 +4498,7 @@ static int rados_object_load_state(rgw_sal_object_t* obj, const rgw_sal_dpp_t* d
     rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->ioctxs_initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -4574,7 +4553,7 @@ static int rados_object_get_obj_attrs(rgw_sal_object_t* obj, rgw_sal_yield_t* y,
     rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->ioctxs_initialized) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -4600,25 +4579,49 @@ static int rados_object_get_obj_attrs(rgw_sal_object_t* obj, rgw_sal_yield_t* y,
         if (!impl->attrs) return RGW_SAL_ERR_OUT_OF_MEMORY;
     }
 
-    /* 使用 omap 获取对象的用户定义属性 */
+    /* 使用 omap 获取对象的用户定义属性 - 使用兼容 librados 17.2.9 的 API */
+    rados_read_op_t read_op = rados_create_read_op();
+    if (!read_op) {
+        return RGW_SAL_ERR_OUT_OF_MEMORY;
+    }
+
     rados_omap_iter_t iter;
-    int ret = rados_omap_get_vals(ioctx, oid, "", NULL, 0, &iter);
-    if (ret < 0) {
+    unsigned char pmore = 1;
+    int op_ret = 0;
+
+    /* 使用 rados_read_op_omap_get_vals2 替代不存在的 rados_omap_get_vals */
+    rados_read_op_omap_get_vals2(read_op, "", NULL, 0, &iter, &pmore, &op_ret);
+
+    /* 执行读取操作 */
+    int ret = rados_read_op_operate(read_op, ioctx, oid, 0);
+    rados_release_read_op(read_op);
+
+    if (ret < 0 || op_ret < 0) {
         /* 如果不支持 omap，尝试使用 getxattr */
         return RGW_SAL_OK;  /* 属性将保持为空 */
     }
 
-    /* 遍历并复制 xattr 到 impl->attrs */
-    const char* key;
-    const uint8_t* val;
-    size_t len;
-    while (rados_omap_iter_next(iter, &key, &val, &len) == 0) {
+    /* 遍历并复制 xattr 到 impl->attrs - 使用 rados_omap_get_next2 */
+    const char* key = NULL;
+    const char* val = NULL;
+    size_t len = 0;
+    int next_ret = 0;
+
+    while (pmore) {
+        next_ret = rados_omap_get_next2(iter, &key, &val, &len, &op_ret);
+        if (next_ret < 0 || !key) {
+            break;
+        }
         /* 跳过系统属性 (以 _ 开始) */
-        if (key && key[0] != '_') {
-            rgw_sal_attrs_set(impl->attrs, key, (const char*)val, len);
+        if (key && key[0] != '_' && val) {
+            rgw_sal_attrs_set(impl->attrs, key, (const uint8_t*)val, len);
+        }
+        /* 检查是否还有更多数据 */
+        if (op_ret != 0) {
+            pmore = 0;
         }
     }
-    rados_omap_iter_end(iter);
+    rados_omap_get_end(iter);
 
     (void)y;
     (void)dpp;
@@ -4633,7 +4636,7 @@ static int rados_object_set_obj_attrs(rgw_sal_object_t* obj, rgw_sal_attrs_t* se
     rados_object_impl_t* obj_impl = (rados_object_impl_t*)obj->impl;
     if (!obj_impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
     /* 获取数据池 IO 上下文 */
@@ -4861,7 +4864,7 @@ int rgw_sal_rados_complete_flush_stats(rgw_sal_driver_t* driver,
     /* 检查是否有陈旧的统计需要刷新 */
     uint8_t* val = NULL;
     size_t val_len = 0;
-    int ret = rgw_omap_get(impl->buckets_index_ioctx, omap_key, &val, &val_len);
+    int ret = rgw_omap_get(impl->buckets_index_ioctx, omap_key, "stats", &val, &val_len);
     if (ret < 0 && ret != -ENOENT) {
         return ret;
     }
@@ -4872,7 +4875,7 @@ int rgw_sal_rados_complete_flush_stats(rgw_sal_driver_t* driver,
         rgw_omap_free_value(val);
 
         /* 清除陈旧标记 */
-        ret = rgw_omap_del(impl->buckets_index_ioctx, omap_key);
+        ret = rgw_omap_del(impl->buckets_index_ioctx, omap_key, "stats");
         if (ret < 0 && ret != -ENOENT) {
             return ret;
         }
@@ -5004,7 +5007,7 @@ int rgw_sal_rados_object_read_prepare(rgw_sal_object_t* obj,
     rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->rados_handle) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -5051,7 +5054,7 @@ int rgw_sal_rados_object_read_iterate(rgw_sal_object_t* obj,
     rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->rados_handle) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -5123,7 +5126,7 @@ int rgw_sal_rados_object_get_attr(rgw_sal_object_t* obj,
     rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)obj->bucket->driver->impl;
+    rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)obj->bucket->driver)->impl;
     if (!driver_impl || !driver_impl->rados_handle) {
         return RGW_SAL_ERR_NOT_INITIALIZED;
     }
@@ -5595,7 +5598,7 @@ static int rados_multipart_init(rgw_sal_driver_t* driver, rgw_sal_bucket_t* buck
     }
 
     /* 写入元数据对象 */
-    ret = rados_write(ioctx, meta_key, (const char*)info_buf, info_len, 0, 0);
+    ret = rados_write(ioctx, meta_key, (const char*)info_buf, info_len, 0);
     free(info_buf);
 
     if (ret < 0) {
@@ -5829,7 +5832,7 @@ static int rados_multipart_store_info(rgw_sal_driver_t* driver, const char* buck
     }
 
     /* 写入元数据对象 */
-    ret = rados_write(ioctx, meta_key, (const char*)buf, buf_len, 0, 0);
+    ret = rados_write(ioctx, meta_key, (const char*)buf, buf_len, 0);
     free(buf);
 
     if (ret < 0) {
@@ -6111,7 +6114,7 @@ static int rados_store_account(rgw_sal_driver_t* driver, const rgw_account_info_
 
     /* 存储主数据 */
     char key[256];
-    ret = rados_account_make_key(0, key, sizeof(key), info->id, NULL, NULL);
+    ret = rados_account_make_key(0, key, sizeof(key), info->account_id, NULL, NULL);
     if (ret < 0) {
         free(data);
         return ret;
@@ -6124,11 +6127,11 @@ static int rados_store_account(rgw_sal_driver_t* driver, const rgw_account_info_
     }
 
     /* 存储名称索引 */
-    if (info->name) {
-        ret = rados_account_make_key(1, key, sizeof(key), info->id, info->name, NULL);
+    if (info->display_name) {
+        ret = rados_account_make_key(1, key, sizeof(key), info->account_id, info->display_name, NULL);
         if (ret >= 0) {
             char id_ref[256];
-            snprintf(id_ref, sizeof(id_ref), "%s", info->id);
+            snprintf(id_ref, sizeof(id_ref), "%s", info->account_id);
             size_t id_len = strlen(id_ref);
             rgw_omap_set(impl->account_pool_ioctx, ".rgw.meta.account", key,
                          (const uint8_t*)id_ref, id_len, exclusive);
@@ -6137,10 +6140,10 @@ static int rados_store_account(rgw_sal_driver_t* driver, const rgw_account_info_
 
     /* 存储邮箱索引 */
     if (info->email) {
-        ret = rados_account_make_key(2, key, sizeof(key), info->id, NULL, info->email);
+        ret = rados_account_make_key(2, key, sizeof(key), info->account_id, NULL, info->email);
         if (ret >= 0) {
             char id_ref[256];
-            snprintf(id_ref, sizeof(id_ref), "%s", info->id);
+            snprintf(id_ref, sizeof(id_ref), "%s", info->account_id);
             size_t id_len = strlen(id_ref);
             rgw_omap_set(impl->account_pool_ioctx, ".rgw.meta.account", key,
                          (const uint8_t*)id_ref, id_len, exclusive);
@@ -6171,14 +6174,14 @@ static int rados_delete_account(rgw_sal_driver_t* driver, const char* account_id
 
     /* 先加载账户信息以获取名称和邮箱索引 */
     rgw_account_info_t info;
-    rgw_account_info_init(&info);
+    memset(&info, 0, sizeof(info));
 
     int ret = rados_load_account_by_id(driver, account_id, &info, dpp);
     if (ret == 0) {
         /* 删除名称索引 */
-        if (info.name) {
+        if (info.display_name) {
             char key[256];
-            rados_account_make_key(1, key, sizeof(key), account_id, info.name, NULL);
+            rados_account_make_key(1, key, sizeof(key), account_id, info.display_name, NULL);
             rgw_omap_del(impl->account_pool_ioctx, ".rgw.meta.account", key);
         }
 

@@ -79,8 +79,17 @@ set(C_COMMON_SOURCES
     src/rgw_hex.c
     src/rgw_acl_serde.c
     src/rgw_policy_serde.c
+    src/rgw_omap.c
+    src/rgw_group_serde.c
+    src/rgw_oidc_serde.c
+    src/rgw_bucket_serde.c
     src/rgw_sal_attrs.c
     src/rgw_sal_types.c
+    src/rgw_sal.c
+    src/rgw_notification.c
+    src/rgw_lifecycle.c
+    src/rgw_multipart.c
+    src/rgw_account_serde.c
     containers/rgw_cset.c
     containers/rgw_clist.c
     containers/rgw_chash_map.c

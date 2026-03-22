@@ -307,10 +307,66 @@ CMakeFiles/rgw_c_common_shared.dir/src/rgw_policy_serde.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_policy_serde.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_policy_serde.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_policy_serde.c.s
 
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o: ../src/rgw_omap.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_omap.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_omap.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_omap.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o: ../src/rgw_group_serde.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_group_serde.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_group_serde.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_group_serde.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o: ../src/rgw_oidc_serde.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_oidc_serde.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_oidc_serde.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_oidc_serde.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o: ../src/rgw_bucket_serde.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_bucket_serde.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_bucket_serde.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_bucket_serde.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.s
+
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o: ../src/rgw_sal_attrs.c
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c
 
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.i: cmake_force
@@ -324,7 +380,7 @@ CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.s: cmake_force
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o: ../src/rgw_sal_types.c
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c
 
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.i: cmake_force
@@ -335,10 +391,80 @@ CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.s
 
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o: ../src/rgw_sal.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o: ../src/rgw_notification.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_notification.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_notification.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_notification.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o: ../src/rgw_lifecycle.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_lifecycle.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_lifecycle.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_lifecycle.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o: ../src/rgw_multipart.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_multipart.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_multipart.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_multipart.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.s
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o: ../src/rgw_account_serde.c
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o -MF CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_account_serde.c
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_account_serde.c > CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.i
+
+CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_account_serde.c -o CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.s
+
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o: ../containers/rgw_cset.c
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building C object CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o -MF CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/containers/rgw_cset.c
 
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.i: cmake_force
@@ -352,7 +478,7 @@ CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.s: cmake_force
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o: ../containers/rgw_clist.c
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building C object CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o -MF CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/containers/rgw_clist.c
 
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.i: cmake_force
@@ -366,7 +492,7 @@ CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.s: cmake_force
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o: CMakeFiles/rgw_c_common_shared.dir/flags.make
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o: ../containers/rgw_chash_map.c
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o: CMakeFiles/rgw_c_common_shared.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building C object CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building C object CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o -MF CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o.d -o CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o -c /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/containers/rgw_chash_map.c
 
 CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.i: cmake_force
@@ -396,8 +522,17 @@ rgw_c_common_shared_OBJECTS = \
 "CMakeFiles/rgw_c_common_shared.dir/src/rgw_hex.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/src/rgw_acl_serde.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/src/rgw_policy_serde.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o" \
+"CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o" \
 "CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o"
@@ -422,14 +557,23 @@ librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_buffer.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_hex.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_acl_serde.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_policy_serde.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_omap.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_group_serde.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_oidc_serde.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_bucket_serde.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_attrs.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal_types.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_sal.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_notification.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_lifecycle.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_multipart.c.o
+librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/src/rgw_account_serde.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/containers/rgw_cset.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/containers/rgw_clist.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/containers/rgw_chash_map.c.o
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/build.make
 librgw_c_common.so: CMakeFiles/rgw_c_common_shared.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Linking C shared library librgw_c_common.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Linking C shared library librgw_c_common.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/rgw_c_common_shared.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

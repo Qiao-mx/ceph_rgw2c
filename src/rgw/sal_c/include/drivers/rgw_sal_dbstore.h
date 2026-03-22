@@ -7,7 +7,8 @@
 
 #pragma once
 
-#include "rgw_sal_c.h"
+#include "rgw_sal.h"
+#include "rgw_sal_types.h"
 
 #ifdef __cplusplus
 extern "C" {

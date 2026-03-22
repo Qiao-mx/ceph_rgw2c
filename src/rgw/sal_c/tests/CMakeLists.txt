@@ -81,6 +81,7 @@ if(HAVE_LIBRADOS)
     # 公共源文件 - 实际位置在 c_common
     set(SAL_COMMON_SOURCES
         ${C_COMMON_ROOT}/src/rgw_sal_types.c
+        ${C_COMMON_ROOT}/src/rgw_sal_attrs.c
         ${C_COMMON_ROOT}/src/rgw_sal.c
     )
 
@@ -102,7 +103,11 @@ if(HAVE_LIBRADOS)
     )
 
     target_include_directories(test_rados_driver PRIVATE ${SAL_INCLUDE_DIRS})
-    target_link_libraries(test_rados_driver ${LIBRADOS_LIBRARY} m)
+    target_link_libraries(test_rados_driver
+        ${LIBRADOS_LIBRARY}
+        ${C_COMMON_ROOT}/build/librgw_c_common.a
+        m
+    )
 
     if(WITH_ASAN)
         target_compile_options(test_rados_driver PRIVATE -fsanitize=address -g -O1)

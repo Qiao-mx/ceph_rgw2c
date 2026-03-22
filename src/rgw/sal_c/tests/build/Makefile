@@ -129,6 +129,219 @@ test_basic/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_basic.dir/build.make CMakeFiles/test_basic.dir/build
 .PHONY : test_basic/fast
 
+#=============================================================================
+# Target rules for targets named test_rados_driver
+
+# Build rule for target.
+test_rados_driver: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_rados_driver
+.PHONY : test_rados_driver
+
+# fast build rule for target.
+test_rados_driver/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/build
+.PHONY : test_rados_driver/fast
+
+#=============================================================================
+# Target rules for targets named test_dbstore_driver
+
+# Build rule for target.
+test_dbstore_driver: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_dbstore_driver
+.PHONY : test_dbstore_driver
+
+# fast build rule for target.
+test_dbstore_driver/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/build
+.PHONY : test_dbstore_driver/fast
+
+#=============================================================================
+# Target rules for targets named test_integration
+
+# Build rule for target.
+test_integration: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_integration
+.PHONY : test_integration
+
+# fast build rule for target.
+test_integration/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/build
+.PHONY : test_integration/fast
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.o: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.o
+
+# target to build an object file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.o
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.i: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.i
+
+# target to preprocess a source file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.i
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.s: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.s
+
+# target to generate assembly for a file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.c.s
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.o: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.o
+
+# target to build an object file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.o
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.i: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.i
+
+# target to preprocess a source file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.i
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.s: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.s
+
+# target to generate assembly for a file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.c.s
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.o: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.o
+
+# target to build an object file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.o
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.i: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.i
+
+# target to preprocess a source file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.i
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.s: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.s
+
+# target to generate assembly for a file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.c.s
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.o: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.o
+
+# target to build an object file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.o
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.i: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.i
+
+# target to preprocess a source file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.i
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.s: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.s
+
+# target to generate assembly for a file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.c.s
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.o: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.o
+
+# target to build an object file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.o
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.i: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.i
+
+# target to preprocess a source file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.i
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.s: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.s
+
+# target to generate assembly for a file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.c.s
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.o: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.o
+
+# target to build an object file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.o
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.o
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.i: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.i
+
+# target to preprocess a source file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.i
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.i
+
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.s: mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.s
+
+# target to generate assembly for a file
+mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.s
+.PHONY : mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.c.s
+
 test_basic.o: test_basic.c.o
 .PHONY : test_basic.o
 
@@ -153,6 +366,78 @@ test_basic.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_basic.dir/build.make CMakeFiles/test_basic.dir/test_basic.c.s
 .PHONY : test_basic.c.s
 
+test_dbstore_driver.o: test_dbstore_driver.c.o
+.PHONY : test_dbstore_driver.o
+
+# target to build an object file
+test_dbstore_driver.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/test_dbstore_driver.c.o
+.PHONY : test_dbstore_driver.c.o
+
+test_dbstore_driver.i: test_dbstore_driver.c.i
+.PHONY : test_dbstore_driver.i
+
+# target to preprocess a source file
+test_dbstore_driver.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/test_dbstore_driver.c.i
+.PHONY : test_dbstore_driver.c.i
+
+test_dbstore_driver.s: test_dbstore_driver.c.s
+.PHONY : test_dbstore_driver.s
+
+# target to generate assembly for a file
+test_dbstore_driver.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_dbstore_driver.dir/build.make CMakeFiles/test_dbstore_driver.dir/test_dbstore_driver.c.s
+.PHONY : test_dbstore_driver.c.s
+
+test_integration.o: test_integration.c.o
+.PHONY : test_integration.o
+
+# target to build an object file
+test_integration.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/test_integration.c.o
+.PHONY : test_integration.c.o
+
+test_integration.i: test_integration.c.i
+.PHONY : test_integration.i
+
+# target to preprocess a source file
+test_integration.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/test_integration.c.i
+.PHONY : test_integration.c.i
+
+test_integration.s: test_integration.c.s
+.PHONY : test_integration.s
+
+# target to generate assembly for a file
+test_integration.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/test_integration.c.s
+.PHONY : test_integration.c.s
+
+test_rados_driver.o: test_rados_driver.c.o
+.PHONY : test_rados_driver.o
+
+# target to build an object file
+test_rados_driver.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/test_rados_driver.c.o
+.PHONY : test_rados_driver.c.o
+
+test_rados_driver.i: test_rados_driver.c.i
+.PHONY : test_rados_driver.i
+
+# target to preprocess a source file
+test_rados_driver.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/test_rados_driver.c.i
+.PHONY : test_rados_driver.c.i
+
+test_rados_driver.s: test_rados_driver.c.s
+.PHONY : test_rados_driver.s
+
+# target to generate assembly for a file
+test_rados_driver.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rados_driver.dir/build.make CMakeFiles/test_rados_driver.dir/test_rados_driver.c.s
+.PHONY : test_rados_driver.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,9 +447,39 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... test_basic"
+	@echo "... test_dbstore_driver"
+	@echo "... test_integration"
+	@echo "... test_rados_driver"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.o"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.i"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal.s"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.o"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.i"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_attrs.s"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.o"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.i"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_sal_types.s"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.o"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.i"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_dbstore.s"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.o"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.i"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/drivers/rgw_sal_rados.s"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.o"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.i"
+	@echo "... mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/src/rgw_sal_usage.s"
 	@echo "... test_basic.o"
 	@echo "... test_basic.i"
 	@echo "... test_basic.s"
+	@echo "... test_dbstore_driver.o"
+	@echo "... test_dbstore_driver.i"
+	@echo "... test_dbstore_driver.s"
+	@echo "... test_integration.o"
+	@echo "... test_integration.i"
+	@echo "... test_integration.s"
+	@echo "... test_rados_driver.o"
+	@echo "... test_rados_driver.i"
+	@echo "... test_rados_driver.s"
 .PHONY : help
 
 
