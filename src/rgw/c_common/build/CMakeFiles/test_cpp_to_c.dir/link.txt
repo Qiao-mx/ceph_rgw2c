@@ -1,1 +1,1 @@
-/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_cpp_to_c.dir/tests/test_cpp_to_c.c.o -o test_cpp_to_c  librgw_c_common.a -lpthread 
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_cpp_to_c.dir/tests/test_cpp_to_c.c.o -o test_cpp_to_c  librgw_c_common.a -lpthread 

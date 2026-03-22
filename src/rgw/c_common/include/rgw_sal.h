@@ -107,10 +107,19 @@ rgw_user_info_t *rgw_user_info_create(void);
  */
 void rgw_user_info_destroy(rgw_user_info_t *info);
 
-/* 属性映射 */
-struct rgw_sal_attrs {
-    void *data;  /* 内部实现: 使用 rgw_cmap */
-};
+/* 属性映射 - 内部实现 */
+typedef struct rgw_sal_attrs {
+    struct rgw_sal_attr_pair *pairs;
+    size_t count;
+    size_t capacity;
+} rgw_sal_attrs_t;
+
+/* 属性对结构 - 内部使用 */
+typedef struct rgw_sal_attr_pair {
+    char *key;
+    uint8_t *value;
+    size_t value_len;
+} rgw_sal_attr_pair_t;
 
 /**
  * @brief 创建属性映射

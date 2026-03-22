@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include "rgw_policy_serde.h"
 #include "rgw_errors.h"

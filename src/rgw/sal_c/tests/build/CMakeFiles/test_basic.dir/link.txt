@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/test_basic.dir/test_basic.c.o -o test_basic  /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/../c_common/build/librgw_c_common.a -lm 

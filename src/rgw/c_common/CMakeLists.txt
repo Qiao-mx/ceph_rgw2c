@@ -79,6 +79,8 @@ set(C_COMMON_SOURCES
     src/rgw_hex.c
     src/rgw_acl_serde.c
     src/rgw_policy_serde.c
+    src/rgw_sal_attrs.c
+    src/rgw_sal_types.c
     containers/rgw_cset.c
     containers/rgw_clist.c
     containers/rgw_chash_map.c

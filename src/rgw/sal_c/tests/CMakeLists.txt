@@ -1,7 +1,13 @@
+# -*- mode:C; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
+# vim: ts=8 sw=2 smarttab ft=cmake
+
+# ===========================================================================
 # SAL C 测试 CMakeLists.txt
 # 完整测试套件 - 支持 librados
+# ===========================================================================
 
 cmake_minimum_required(VERSION 3.10)
+project(sal_c_tests C)
 
 # 获取 sal_c 根目录 (tests 的父目录)
 get_filename_component(SAL_C_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
@@ -48,16 +54,17 @@ option(WITH_ASAN "Enable AddressSanitizer for tests" OFF)
 
 add_executable(test_basic
     ${CMAKE_CURRENT_SOURCE_DIR}/test_basic.c
-    ${SAL_C_ROOT}/src/core/rgw_sal_types.c
 )
 
 target_include_directories(test_basic PRIVATE
     ${SAL_C_ROOT}/include
-    ${SAL_C_ROOT}/include/core
     ${C_COMMON_ROOT}/include
 )
 
-target_link_libraries(test_basic m)
+target_link_libraries(test_basic
+    ${C_COMMON_ROOT}/build/librgw_c_common.a
+    m
+)
 
 if(WITH_ASAN)
     target_compile_options(test_basic PRIVATE -fsanitize=address -g -O1)
@@ -71,10 +78,10 @@ add_test(NAME test_basic COMMAND test_basic)
 # ========================================================================
 
 if(HAVE_LIBRADOS)
-    # 公共源文件
+    # 公共源文件 - 实际位置在 c_common
     set(SAL_COMMON_SOURCES
-        ${SAL_C_ROOT}/src/core/rgw_sal_types.c
-        ${SAL_C_ROOT}/src/core/rgw_sal.c
+        ${C_COMMON_ROOT}/src/rgw_sal_types.c
+        ${C_COMMON_ROOT}/src/rgw_sal.c
     )
 
     # 公共包含目录 - 注意顺序很重要！

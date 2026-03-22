@@ -1,0 +1,46 @@
+# WSL sudo 免密码配置
+
+## 概述
+
+本项目使用 WSL2 (Ubuntu-22.04) 作为开发环境。为简化操作，配置当前用户 sudo 免密码。
+
+## 自动密码输入方法
+
+由于WSL中sudo需要密码，可以使用以下方法自动输入密码(123456)：
+
+### 方法1: 使用 echo 管道 (推荐)
+
+```powershell
+# 格式
+wsl -d Ubuntu-22.04 -- bash -c "echo '123456' | sudo -S <command>"
+
+# 示例
+wsl -d Ubuntu-22.04 -- bash -c "echo '123456' | sudo -S apt update"
+wsl -d Ubuntu-22.04 -- bash -c "echo '123456' | sudo -S apt install -y cmake"
+```
+
+### 方法2: 使用辅助脚本
+
+项目根目录提供了 `wsl_sudo_auto.py` 脚本：
+
+```powershell
+# 复制到WSL
+wsl -d Ubuntu-22.04 -- bash -c "cp /mnt/c/Users/10070/Desktop/ceph_rgw2c/wsl_sudo_auto.py /tmp/"
+
+# 使用脚本执行sudo命令
+wsl -d Ubuntu-22.04 -- python3 /tmp/wsl_sudo_auto.py "apt update"
+```
+
+### 方法3: 配置 sudoers 免密码
+
+```bash
+# 在WSL中执行
+sudo visudo
+# 添加行: %sudo ALL=(ALL) NOPASSWD:ALL
+```
+
+## 安全说明
+
+- 此配置仅适用于开发/测试环境
+- 不要在生产环境中使用免密码sudo
+- 密码123456是WSL Ubuntu的默认用户密码

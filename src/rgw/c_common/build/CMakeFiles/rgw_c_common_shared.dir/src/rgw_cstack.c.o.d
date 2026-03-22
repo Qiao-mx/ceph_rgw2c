@@ -1,8 +1,8 @@
 CMakeFiles/rgw_c_common_shared.dir/src/rgw_cstack.c.o: \
- /mnt/d/nas/ceph-20.1.1/src/rgw/c_common/src/rgw_cstack.c \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/src/rgw_cstack.c \
  /usr/include/stdc-predef.h \
- /mnt/d/nas/ceph-20.1.1/src/rgw/c_common/include/containers/rgw_cstack.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/containers/rgw_cstack.h \
+ /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -17,11 +17,10 @@ CMakeFiles/rgw_c_common_shared.dir/src/rgw_cstack.c.o: \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
- /mnt/d/nas/ceph-20.1.1/src/rgw/c_common/include/containers/rgw_cmemory.h \
- /mnt/d/nas/ceph-20.1.1/src/rgw/c_common/include/internal/utstack.h \
+ /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h \
+ /usr/lib/gcc/x86_64-linux-gnu/11/include/stdbool.h \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/containers/rgw_cmemory.h \
+ /mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/c_common/include/internal/utstack.h \
  /usr/include/stdlib.h /usr/include/x86_64-linux-gnu/bits/waitflags.h \
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
  /usr/include/x86_64-linux-gnu/bits/floatn.h \

@@ -1,1 +1,1 @@
-/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_buffer.dir/tests/test_buffer.c.o -o test_buffer  librgw_c_common.a 
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_buffer.dir/tests/test_buffer.c.o -o test_buffer  librgw_c_common.a 

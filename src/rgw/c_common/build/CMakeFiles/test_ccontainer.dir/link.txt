@@ -1,1 +1,1 @@
-/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_ccontainer.dir/tests/test_ccontainer.c.o -o test_ccontainer  librgw_c_common.a -lpthread 
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_ccontainer.dir/tests/test_ccontainer.c.o -o test_ccontainer  librgw_c_common.a -lpthread 

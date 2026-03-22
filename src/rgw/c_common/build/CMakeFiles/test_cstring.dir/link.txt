@@ -1,1 +1,1 @@
-/usr/bin/cc  -Wall -Wextra -fPIC CMakeFiles/test_cstring.dir/tests/test_cstring.c.o -o test_cstring  librgw_c_common.a 
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_cstring.dir/tests/test_cstring.c.o -o test_cstring  librgw_c_common.a 

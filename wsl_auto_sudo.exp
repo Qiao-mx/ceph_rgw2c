@@ -1,0 +1,15 @@
+#!/usr/bin/expect -f
+# WSL自动密码输入脚本
+# 密码: 123456
+# 用法: wsl -d Ubuntu-22.04 -- bash -c "expect /mnt/c/Users/10070/Desktop/ceph_rgw2c/wsl_auto_sudo.exp && sudo apt update"
+
+set timeout 300
+
+spawn sudo apt update
+expect {
+    "password" { send "123456\r"; exp_continue }
+    eof
+}
+
+wait
+echo "apt update完成"

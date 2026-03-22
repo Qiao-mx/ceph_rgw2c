@@ -1,0 +1,3 @@
+/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/tests/build/CMakeFiles/test_basic.dir
+/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/tests/build/CMakeFiles/edit_cache.dir
+/mnt/c/Users/10070/Desktop/ceph_rgw2c/src/rgw/sal_c/tests/build/CMakeFiles/rebuild_cache.dir
