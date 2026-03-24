@@ -15,6 +15,7 @@
 
 #include "rgw_sal.h"
 #include "rgw_sal_rados.h"
+#include "rgw_sal_errors.h"
 
 /* 引入 OMAP 和序列化封装 */
 #include "rgw_omap.h"
@@ -34,6 +35,16 @@
 /*============================================================================
  * RADOS 驱动常量定义
  *============================================================================*/
+
+/**
+ * @brief 安全获取用户 ID 的辅助宏
+ *
+ * 使用 vtable 函数获取用户 ID，如果失败则返回指定的错误码
+ * 用法: const char* id = RADOS_USER_GET_ID_SAFE(user); if (!id) return -1;
+ */
+#define RADOS_USER_GET_ID(user) \
+    ((user) && (user)->vtable && (user)->vtable->get_id ? \
+     (user)->vtable->get_id(user) : NULL)
 
 /**
  * @brief OMAP 键名常量
@@ -1158,16 +1169,14 @@ static void* rados_user_clone(const rgw_sal_user_t* user) {
     new_impl->usage_loaded = old_impl->usage_loaded;
     new_impl->user_info_stored = old_impl->user_info_stored;
 
-    /* 深拷贝配额信息中的字符串 */
-    if (old_impl->quota_info.quota_bytes) {
-        new_impl->quota_info.quota_bytes = strdup(old_impl->quota_info.quota_bytes);
-    }
-    if (old_impl->quota_info.quota_max_objects) {
-        new_impl->quota_info.quota_max_objects = strdup(old_impl->quota_info.quota_max_objects);
-    }
-    /* 复制配额结构其他字段 */
+    /* 深拷贝配额信息 - quota_bytes 和 quota_max_objects 是 uint64_t，直接复制 */
     new_impl->quota_info.enabled = old_impl->quota_info.enabled;
     new_impl->quota_info.check_on_raw = old_impl->quota_info.check_on_raw;
+    new_impl->quota_info.max_size = old_impl->quota_info.max_size;
+    new_impl->quota_info.max_size_kb = old_impl->quota_info.max_size_kb;
+    new_impl->quota_info.max_objects = old_impl->quota_info.max_objects;
+    new_impl->quota_info.quota_bytes = old_impl->quota_info.quota_bytes;
+    new_impl->quota_info.quota_max_objects = old_impl->quota_info.quota_max_objects;
 
     /* 深拷贝权限信息中的字符串 */
     if (old_impl->user_caps.caps) {
@@ -1213,13 +1222,7 @@ static void rados_user_destroy(rgw_sal_user_t* user) {
         free(impl->ns);
         impl->ns = NULL;
 
-        /* 释放配额信息中的字符串资源 */
-        if (impl->quota_info.quota_bytes) {
-            free(impl->quota_info.quota_bytes);
-        }
-        if (impl->quota_info.quota_max_objects) {
-            free(impl->quota_info.quota_max_objects);
-        }
+        /* 注意: quota_bytes 和 quota_max_objects 是 uint64_t，不是指针，不需要释放 */
 
         /* 释放权限信息中的字符串资源 */
         if (impl->user_caps.caps) {
@@ -1323,13 +1326,17 @@ static int rados_user_load(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp, rgw_s
     rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
+    /* 安全获取用户 ID */
+    const char* user_id = RADOS_USER_GET_ID(user);
+    if (!user_id) return RGW_SAL_ERR_INVALID_ARG;
+
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user_id);
 
     uint8_t* data = NULL;
     size_t data_len = 0;
 
-    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user->user_id->id, &data, &data_len);
+    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user_id, &data, &data_len);
     if (ret < 0) return RGW_SAL_ERR_NOT_FOUND;
 
     ret = parse_user_from_buffer(impl, data, data_len);
@@ -1352,14 +1359,18 @@ static int rados_user_store(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
     rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
+    /* 安全获取用户 ID */
+    const char* user_id = RADOS_USER_GET_ID(user);
+    if (!user_id) return RGW_SAL_ERR_INVALID_ARG;
+
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user_id);
 
     size_t buf_size = 0;
     uint8_t* buffer = serialize_user_to_buffer(impl, &buf_size);
     if (!buffer) return RGW_SAL_ERR_INTERNAL_ERROR;
 
-    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user->user_id->id, buffer, buf_size, exclusive);
+    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user_id, buffer, buf_size, exclusive);
     rgw_sal_free_buffer(buffer);
 
     if (ret < 0) {
@@ -1378,10 +1389,14 @@ static int rados_user_remove(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp, rgw
     rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
-    char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
+    /* 安全获取用户 ID */
+    const char* user_id = RADOS_USER_GET_ID(user);
+    if (!user_id) return RGW_SAL_ERR_INVALID_ARG;
 
-    int ret = rgw_omap_del(driver_impl->users_uid_ioctx, bucket, user->user_id->id);
+    char bucket[RGW_SAL_BUF_SIZE];
+    snprintf(bucket, sizeof(bucket), ".users.%s", user_id);
+
+    int ret = rgw_omap_del(driver_impl->users_uid_ioctx, bucket, user_id);
     if (ret < 0) return RGW_SAL_ERR_NOT_FOUND;
 
     (void)dpp; (void)y;
@@ -1397,14 +1412,18 @@ static int rados_user_read_attrs(rgw_sal_user_t* user, const rgw_sal_dpp_t* dpp,
     rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
+    /* 安全获取用户 ID */
+    const char* user_id = RADOS_USER_GET_ID(user);
+    if (!user_id) return RGW_SAL_ERR_INVALID_ARG;
+
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user_id);
 
     /* 先读取基本用户数据 */
     uint8_t* data = NULL;
     size_t data_len = 0;
 
-    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user->user_id->id, &data, &data_len);
+    int ret = rgw_omap_get(driver_impl->users_uid_ioctx, bucket, user_id, &data, &data_len);
     if (ret < 0) return RGW_SAL_ERR_NOT_FOUND;
 
     /* 解析用户数据到 impl */
@@ -1427,6 +1446,10 @@ static int rados_user_merge_and_store_attrs(rgw_sal_user_t* user, rgw_sal_attrs_
     rados_driver_impl_t* driver_impl = (rados_driver_impl_t*)((rgw_sal_driver_t*)user->driver)->impl;
     if (!driver_impl || !driver_impl->initialized) return RGW_SAL_ERR_NOT_INITIALIZED;
 
+    /* 安全获取用户 ID */
+    const char* user_id = RADOS_USER_GET_ID(user);
+    if (!user_id) return RGW_SAL_ERR_INVALID_ARG;
+
     /* 获取当前属性，如果不存在则创建 */
     if (!impl->attrs) {
         impl->attrs = rgw_sal_attrs_create();
@@ -1446,9 +1469,9 @@ static int rados_user_merge_and_store_attrs(rgw_sal_user_t* user, rgw_sal_attrs_
     if (!buffer) return RGW_SAL_ERR_INTERNAL_ERROR;
 
     char bucket[RGW_SAL_BUF_SIZE];
-    snprintf(bucket, sizeof(bucket), ".users.%s", user->user_id->id);
+    snprintf(bucket, sizeof(bucket), ".users.%s", user_id);
 
-    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user->user_id->id, buffer, buf_size, false);
+    int ret = rgw_omap_set(driver_impl->users_uid_ioctx, bucket, user_id, buffer, buf_size, false);
     rgw_sal_free_buffer(buffer);
 
     if (ret < 0) return RGW_SAL_ERR_WRITE_ERROR;
@@ -2230,7 +2253,7 @@ static rgw_sal_bucket_info_t* rados_bucket_get_info(rgw_sal_bucket_t* bucket) {
 
     /* 从 impl 填充信息 - 使用 bucket 成员 */
     if (impl->name) info->bucket.name = strdup(impl->name);
-    if (impl->tenant) info->bucket.name = strdup(impl->tenant);  /* 覆盖 name */
+    if (impl->tenant) info->bucket.tenant = strdup(impl->tenant);  /* 修正: 赋值给 bucket.tenant 而不是覆盖 name */
     if (impl->marker) info->marker = strdup(impl->marker);
     if (impl->bucket_id) info->bucket_id = strdup(impl->bucket_id);
     /* 设置 owner */
@@ -7217,3 +7240,568 @@ static int rados_remove_topic_v2(rgw_sal_driver_t* driver, const char* tenant,
 /*============================================================================
  * 注意：rgw_sal_create_driver 函数定义在 rgw_sal.c 中
  *============================================================================*/
+
+/*============================================================================
+ * RADOS 驱动 API 函数实现 (非 static)
+ *============================================================================*/
+
+/**
+ * @brief 销毁 RADOS 驱动
+ */
+void rgw_sal_rados_driver_destroy(rgw_sal_driver_t* driver) {
+    if (!driver) return;
+    if (driver->impl) {
+        free(driver->impl);
+        driver->impl = NULL;
+    }
+    free(driver);
+}
+
+/**
+ * @brief 销毁 RADOS 用户
+ */
+void rgw_sal_rados_user_destroy(rgw_sal_user_t* user) {
+    if (!user) return;
+    if (user->impl) {
+        free(user->impl);
+        user->impl = NULL;
+    }
+    free(user);
+}
+
+/**
+ * @brief 销毁 RADOS 桶
+ */
+void rgw_sal_rados_bucket_destroy(rgw_sal_bucket_t* bucket) {
+    if (!bucket) return;
+    if (bucket->impl) {
+        free(bucket->impl);
+        bucket->impl = NULL;
+    }
+    free(bucket);
+}
+
+/**
+ * @brief 销毁 RADOS 对象
+ */
+void rgw_sal_rados_object_destroy(rgw_sal_object_t* obj) {
+    if (!obj) return;
+    if (obj->impl) {
+        free(obj->impl);
+        obj->impl = NULL;
+    }
+    free(obj);
+}
+
+/**
+ * @brief 获取用户
+ */
+rgw_sal_user_t* rgw_sal_rados_get_user(rgw_sal_driver_t* driver, const rgw_sal_user_id_t* uid) {
+    if (!driver || !uid) return NULL;
+
+    rgw_sal_user_t* user = (rgw_sal_user_t*)calloc(1, sizeof(rgw_sal_user_t));
+    if (!user) return NULL;
+
+    rados_user_impl_t* impl = (rados_user_impl_t*)calloc(1, sizeof(rados_user_impl_t));
+    if (!impl) {
+        free(user);
+        return NULL;
+    }
+
+    /* 从输入参数初始化 impl */
+    if (uid->id) impl->id = strdup(uid->id);
+    if (uid->tenant) impl->tenant = strdup(uid->tenant);
+    impl->max_buckets = -1;  /* 默认无限制 */
+    impl->loaded = false;
+    impl->user_type = uid->type;
+    impl->destroyed = false;
+
+    /* 初始化属性 */
+    impl->attrs = rgw_sal_attrs_create();
+
+    /* 设置 vtable 和 impl */
+    user->vtable = driver->user_vtable;
+    user->impl = impl;
+    user->driver = driver;
+
+    return user;
+}
+
+/**
+ * @brief 克隆用户
+ */
+rgw_sal_user_t* rgw_sal_rados_user_clone(const rgw_sal_user_t* user) {
+    if (!user) return NULL;
+
+    rgw_sal_user_t* new_user = (rgw_sal_user_t*)calloc(1, sizeof(rgw_sal_user_t));
+    if (!new_user) return NULL;
+
+    rados_user_impl_t* old_impl = (rados_user_impl_t*)user->impl;
+    if (old_impl) {
+        rados_user_impl_t* new_impl = (rados_user_impl_t*)calloc(1, sizeof(rados_user_impl_t));
+        if (!new_impl) {
+            free(new_user);
+            return NULL;
+        }
+
+        /* 复制所有字段 */
+        if (old_impl->id) new_impl->id = strdup(old_impl->id);
+        if (old_impl->tenant) new_impl->tenant = strdup(old_impl->tenant);
+        if (old_impl->display_name) new_impl->display_name = strdup(old_impl->display_name);
+        if (old_impl->email) new_impl->email = strdup(old_impl->email);
+        if (old_impl->ns) new_impl->ns = strdup(old_impl->ns);
+        new_impl->user_type = old_impl->user_type;
+        new_impl->max_buckets = old_impl->max_buckets;
+        new_impl->loaded = old_impl->loaded;
+        new_impl->usage_loaded = old_impl->usage_loaded;
+        new_impl->user_info_stored = old_impl->user_info_stored;
+        new_impl->destroyed = false;
+
+        /* 复制配额信息 */
+        new_impl->quota_info = old_impl->quota_info;
+
+        /* 复制属性 */
+        if (old_impl->attrs) {
+            new_impl->attrs = rgw_sal_attrs_clone(old_impl->attrs);
+        } else {
+            new_impl->attrs = rgw_sal_attrs_create();
+        }
+
+        /* 复制版本跟踪器 */
+        new_impl->version_tracker = old_impl->version_tracker;
+
+        /* 复制使用统计 */
+        new_impl->usage = old_impl->usage;
+
+        new_user->impl = new_impl;
+    } else {
+        /* 如果原用户没有 impl，至少创建空的 attrs */
+        rados_user_impl_t* new_impl = (rados_user_impl_t*)calloc(1, sizeof(rados_user_impl_t));
+        if (new_impl) {
+            new_impl->destroyed = false;
+            new_impl->attrs = rgw_sal_attrs_create();
+            new_user->impl = new_impl;
+        }
+    }
+
+    new_user->vtable = user->vtable;
+    new_user->driver = user->driver;
+
+    return new_user;
+}
+
+/**
+ * @brief 获取对象名称
+ */
+const char* rgw_sal_rados_object_get_name(const rgw_sal_object_t* obj) {
+    if (!obj) return NULL;
+    if (obj->vtable && obj->vtable->get_name) {
+        return obj->vtable->get_name(obj);
+    }
+    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
+    return impl ? impl->name : NULL;
+}
+
+/**
+ * @brief 检查对象是否为原子操作
+ */
+bool rgw_sal_rados_object_is_atomic(const rgw_sal_object_t* obj) {
+    if (!obj) return false;
+    if (obj->vtable && obj->vtable->is_atomic) {
+        return obj->vtable->is_atomic(obj);
+    }
+    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
+    return impl ? impl->is_atomic : false;
+}
+
+/**
+ * @brief 获取桶
+ */
+rgw_sal_bucket_t* rgw_sal_rados_get_bucket(rgw_sal_driver_t* driver, const rgw_sal_bucket_id_t* bid) {
+    if (!driver || !bid) return NULL;
+
+    rgw_sal_bucket_t* bucket = (rgw_sal_bucket_t*)calloc(1, sizeof(rgw_sal_bucket_t));
+    if (!bucket) return NULL;
+
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)calloc(1, sizeof(rados_bucket_impl_t));
+    if (!impl) {
+        free(bucket);
+        return NULL;
+    }
+
+    /* 从输入参数初始化 impl */
+    if (bid->name) impl->name = strdup(bid->name);
+    if (bid->tenant) impl->tenant = strdup(bid->tenant);
+    if (bid->marker) impl->marker = strdup(bid->marker);
+    if (bid->bucket_id) impl->bucket_id = strdup(bid->bucket_id);
+    impl->loaded = false;
+    impl->created = false;
+    impl->deleted = false;
+    impl->destroyed = false;
+
+    /* 初始化属性 */
+    impl->attrs = rgw_sal_attrs_create();
+
+    /* 设置 vtable 和 impl */
+    bucket->vtable = driver->bucket_vtable;
+    bucket->impl = impl;
+    bucket->driver = driver;
+
+    return bucket;
+}
+
+/**
+ * @brief 获取对象
+ */
+rgw_sal_object_t* rgw_sal_rados_get_object(rgw_sal_driver_t* driver, rgw_sal_bucket_t* bucket, const rgw_sal_obj_key_t* key) {
+    if (!driver || !key) return NULL;
+
+    rgw_sal_object_t* obj = (rgw_sal_object_t*)calloc(1, sizeof(rgw_sal_object_t));
+    if (!obj) return NULL;
+
+    rados_object_impl_t* impl = (rados_object_impl_t*)calloc(1, sizeof(rados_object_impl_t));
+    if (!impl) {
+        free(obj);
+        return NULL;
+    }
+
+    /* 从输入参数初始化 impl */
+    if (key->name) impl->name = strdup(key->name);
+    if (key->instance) impl->instance = strdup(key->instance);
+    impl->is_null = key->is_null;
+    impl->is_atomic = false;
+    impl->is_expired = false;
+    impl->written = false;
+    impl->deleted = false;
+    impl->loaded = false;
+    impl->destroyed = false;
+
+    /* 获取桶信息以设置 bucket 相关字段 */
+    if (bucket) {
+        if (bucket->vtable && bucket->vtable->get_name) {
+            impl->bucket_name = strdup(bucket->vtable->get_name(bucket));
+        }
+        /* 获取桶的 tenant */
+        if (bucket->impl) {
+            rados_bucket_impl_t* bucket_impl = (rados_bucket_impl_t*)bucket->impl;
+            if (bucket_impl->tenant) impl->bucket_tenant = strdup(bucket_impl->tenant);
+            if (bucket_impl->bucket_id) impl->bucket_id = strdup(bucket_impl->bucket_id);
+        }
+    }
+
+    /* 初始化属性 */
+    impl->attrs = rgw_sal_attrs_create();
+
+    /* 设置 vtable, impl 和 bucket */
+    obj->vtable = driver->object_vtable;
+    obj->impl = impl;
+    obj->bucket = bucket;
+
+    return obj;
+}
+
+/**
+ * @brief 获取对象属性
+ */
+rgw_sal_attrs_t* rgw_sal_rados_object_get_attrs(rgw_sal_object_t* obj) {
+    if (!obj) return NULL;
+    if (obj->vtable && obj->vtable->get_attrs) {
+        return obj->vtable->get_attrs(obj);
+    }
+    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
+    return impl ? impl->attrs : NULL;
+}
+
+/**
+ * @brief 设置对象原子性
+ */
+void rgw_sal_rados_object_set_atomic(rgw_sal_object_t* obj, bool atomic) {
+    if (!obj) return;
+    if (obj->vtable && obj->vtable->set_atomic) {
+        obj->vtable->set_atomic(obj, atomic);
+        return;
+    }
+    rados_object_impl_t* impl = (rados_object_impl_t*)obj->impl;
+    if (impl) impl->is_atomic = atomic;
+}
+
+/**
+ * @brief 克隆对象
+ */
+rgw_sal_object_t* rgw_sal_rados_object_clone(const rgw_sal_object_t* obj) {
+    if (!obj) return NULL;
+
+    rgw_sal_object_t* new_obj = (rgw_sal_object_t*)calloc(1, sizeof(rgw_sal_object_t));
+    if (!new_obj) return NULL;
+
+    rados_object_impl_t* old_impl = (rados_object_impl_t*)obj->impl;
+    if (old_impl) {
+        rados_object_impl_t* new_impl = (rados_object_impl_t*)calloc(1, sizeof(rados_object_impl_t));
+        if (!new_impl) {
+            free(new_obj);
+            return NULL;
+        }
+
+        /* 复制所有字段 */
+        if (old_impl->name) new_impl->name = strdup(old_impl->name);
+        if (old_impl->instance) new_impl->instance = strdup(old_impl->instance);
+        if (old_impl->bucket_name) new_impl->bucket_name = strdup(old_impl->bucket_name);
+        if (old_impl->bucket_tenant) new_impl->bucket_tenant = strdup(old_impl->bucket_tenant);
+        if (old_impl->bucket_id) new_impl->bucket_id = strdup(old_impl->bucket_id);
+        if (old_impl->obj_oid) new_impl->obj_oid = strdup(old_impl->obj_oid);
+        new_impl->is_null = old_impl->is_null;
+        new_impl->is_atomic = old_impl->is_atomic;
+        new_impl->is_expired = old_impl->is_expired;
+        new_impl->size = old_impl->size;
+        new_impl->mtime = old_impl->mtime;
+        new_impl->written = old_impl->written;
+        new_impl->deleted = old_impl->deleted;
+        new_impl->loaded = old_impl->loaded;
+        new_impl->destroyed = false;
+
+        /* 复制属性 */
+        if (old_impl->attrs) {
+            new_impl->attrs = rgw_sal_attrs_clone(old_impl->attrs);
+        } else {
+            new_impl->attrs = rgw_sal_attrs_create();
+        }
+
+        new_obj->impl = new_impl;
+    } else {
+        /* 如果原对象没有 impl，至少创建空的 attrs */
+        rados_object_impl_t* new_impl = (rados_object_impl_t*)calloc(1, sizeof(rados_object_impl_t));
+        if (new_impl) {
+            new_impl->destroyed = false;
+            new_impl->is_null = true;
+            new_impl->attrs = rgw_sal_attrs_create();
+            new_obj->impl = new_impl;
+        }
+    }
+
+    new_obj->vtable = obj->vtable;
+    new_obj->bucket = obj->bucket;
+
+    return new_obj;
+}
+
+/**
+ * @brief 获取桶属性
+ */
+rgw_sal_attrs_t* rgw_sal_rados_bucket_get_attrs(rgw_sal_bucket_t* bucket) {
+    if (!bucket) return NULL;
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    return impl ? impl->attrs : NULL;
+}
+
+/**
+ * @brief 获取桶标签
+ */
+const char* rgw_sal_rados_bucket_get_tag(rgw_sal_bucket_t* bucket) {
+    if (!bucket) return NULL;
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    return impl ? impl->tag : NULL;
+}
+
+/**
+ * @brief 设置桶标签
+ */
+void rgw_sal_rados_bucket_set_tag(rgw_sal_bucket_t* bucket, const char* tag) {
+    if (!bucket) return;
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    if (!impl) return;
+    free(impl->tag);
+    impl->tag = tag ? strdup(tag) : NULL;
+}
+
+/**
+ * @brief 克隆桶
+ */
+rgw_sal_bucket_t* rgw_sal_rados_bucket_clone(const rgw_sal_bucket_t* bucket) {
+    if (!bucket) return NULL;
+
+    rgw_sal_bucket_t* new_bucket = (rgw_sal_bucket_t*)calloc(1, sizeof(rgw_sal_bucket_t));
+    if (!new_bucket) return NULL;
+
+    rados_bucket_impl_t* old_impl = (rados_bucket_impl_t*)bucket->impl;
+    if (old_impl) {
+        rados_bucket_impl_t* new_impl = (rados_bucket_impl_t*)calloc(1, sizeof(rados_bucket_impl_t));
+        if (!new_impl) {
+            free(new_bucket);
+            return NULL;
+        }
+
+        /* 复制所有字段 */
+        if (old_impl->name) new_impl->name = strdup(old_impl->name);
+        if (old_impl->tenant) new_impl->tenant = strdup(old_impl->tenant);
+        if (old_impl->marker) new_impl->marker = strdup(old_impl->marker);
+        if (old_impl->bucket_id) new_impl->bucket_id = strdup(old_impl->bucket_id);
+        if (old_impl->owner_id) new_impl->owner_id = strdup(old_impl->owner_id);
+        if (old_impl->tag) new_impl->tag = strdup(old_impl->tag);
+        new_impl->loaded = old_impl->loaded;
+        new_impl->created = old_impl->created;
+        new_impl->deleted = old_impl->deleted;
+        new_impl->mtime = old_impl->mtime;
+        new_impl->destroyed = false;
+
+        /* 复制属性 */
+        if (old_impl->attrs) {
+            new_impl->attrs = rgw_sal_attrs_clone(old_impl->attrs);
+        } else {
+            new_impl->attrs = rgw_sal_attrs_create();
+        }
+
+        /* 复制 ACL 和 policy 指针（浅拷贝） */
+        new_impl->acl = old_impl->acl;
+        new_impl->policy = old_impl->policy;
+
+        new_bucket->impl = new_impl;
+    } else {
+        /* 如果原桶没有 impl，至少创建空的 attrs */
+        rados_bucket_impl_t* new_impl = (rados_bucket_impl_t*)calloc(1, sizeof(rados_bucket_impl_t));
+        if (new_impl) {
+            new_impl->destroyed = false;
+            new_impl->attrs = rgw_sal_attrs_create();
+            new_bucket->impl = new_impl;
+        }
+    }
+
+    new_bucket->vtable = bucket->vtable;
+    new_bucket->driver = bucket->driver;
+
+    return new_bucket;
+}
+
+/**
+ * @brief 获取桶名称
+ */
+const char* rgw_sal_rados_bucket_get_name(const rgw_sal_bucket_t* bucket) {
+    if (!bucket) return NULL;
+    if (bucket->vtable && bucket->vtable->get_name) {
+        return bucket->vtable->get_name(bucket);
+    }
+    rados_bucket_impl_t* impl = (rados_bucket_impl_t*)bucket->impl;
+    return impl ? impl->name : NULL;
+}
+
+/**
+ * @brief 获取用户 ID
+ */
+const char* rgw_sal_rados_user_get_id(const rgw_sal_user_t* user) {
+    if (!user) return NULL;
+    if (user->vtable && user->vtable->get_id) {
+        return user->vtable->get_id(user);
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    return impl ? impl->id : NULL;
+}
+
+/**
+ * @brief 获取用户显示名称
+ */
+const char* rgw_sal_rados_user_get_display_name(rgw_sal_user_t* user) {
+    if (!user) return NULL;
+    if (user->vtable && user->vtable->get_display_name) {
+        return user->vtable->get_display_name(user);
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    return impl ? impl->display_name : NULL;
+}
+
+/**
+ * @brief 设置用户显示名称
+ */
+int rgw_sal_rados_user_set_display_name(rgw_sal_user_t* user, const char* name) {
+    if (!user || !name) return RGW_SAL_ERR_INVALID_ARG;
+    if (user->vtable && user->vtable->set_display_name) {
+        return user->vtable->set_display_name(user, name);
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    if (!impl) return RGW_SAL_ERR_INVALID_ARG;
+    free(impl->display_name);
+    impl->display_name = strdup(name);
+    if (!impl->display_name) return RGW_SAL_ERR_OUT_OF_MEMORY;
+    return RGW_SAL_OK;
+}
+
+/**
+ * @brief 获取用户租户
+ */
+const char* rgw_sal_rados_user_get_tenant(const rgw_sal_user_t* user) {
+    if (!user) return NULL;
+    if (user->vtable && user->vtable->get_tenant) {
+        return user->vtable->get_tenant(user);
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    return impl ? impl->tenant : NULL;
+}
+
+/**
+ * @brief 获取用户类型
+ */
+uint32_t rgw_sal_rados_user_get_type(const rgw_sal_user_t* user) {
+    if (!user) return 0;
+    if (user->vtable && user->vtable->get_type) {
+        return user->vtable->get_type(user);
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    return impl ? impl->user_type : 0;
+}
+
+/**
+ * @brief 获取用户最大桶数
+ */
+int32_t rgw_sal_rados_user_get_max_buckets(const rgw_sal_user_t* user) {
+    if (!user) return -1;
+    if (user->vtable && user->vtable->get_max_buckets) {
+        return user->vtable->get_max_buckets(user);
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    return impl ? impl->max_buckets : -1;
+}
+
+/**
+ * @brief 设置用户最大桶数
+ */
+void rgw_sal_rados_user_set_max_buckets(rgw_sal_user_t* user, int32_t max) {
+    if (!user) return;
+    if (user->vtable && user->vtable->set_max_buckets) {
+        user->vtable->set_max_buckets(user, max);
+        return;
+    }
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    if (impl) impl->max_buckets = max;
+}
+
+/**
+ * @brief 获取用户属性
+ */
+rgw_sal_attrs_t* rgw_sal_rados_user_get_attrs(rgw_sal_user_t* user) {
+    if (!user) return NULL;
+    rados_user_impl_t* impl = (rados_user_impl_t*)user->impl;
+    return impl ? impl->attrs : NULL;
+}
+
+/**
+ * @brief 获取驱动名称
+ */
+const char* rgw_sal_rados_driver_get_name(rgw_sal_driver_t* driver) {
+    if (!driver) return "";
+    return "rados";
+}
+
+/**
+ * @brief 列出桶
+ *
+ * 调用 rados_driver_list_buckets 的实现
+ */
+int rgw_sal_rados_list_buckets(rgw_sal_driver_t* driver,
+                                rgw_sal_user_t* owner,
+                                const char* prefix, const char* delimiter,
+                                const char* marker, const char* end_marker,
+                                uint32_t max_keys, bool list_all,
+                                rgw_sal_bucket_list_t** result,
+                                const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y) {
+    return rados_driver_list_buckets(driver, owner, prefix, delimiter,
+                                     marker, end_marker, max_keys, list_all,
+                                     result, dpp, y);
+}

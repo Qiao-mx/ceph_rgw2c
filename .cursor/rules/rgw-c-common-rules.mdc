@@ -16,7 +16,7 @@ alwaysApply: true
 2. **`memory-bank/@cpp2c-document.md`** - C++ 转 C 的转换规范和指南
 3. **`memory-bank/@implementation-plan.md`** - 实施计划
 
-### 编码标记规范
+### 编码规范
 
 1. 不依赖未实现功能的函数，不要使用简化的实现或标记为todo，必须完成全部功能的转化
 2. 存根函数和标记有todo的函数、功能未完全实现的函数、文件不能标记为已完成，必须要在progress.md和implementation-plan.md标记为待办，并标注没有完成的原因
@@ -86,6 +86,7 @@ alwaysApply: true
 
 ### 编译和测试要求
 
+- 在wsl中进行编译测试
 - 每次代码修改后，**必须**运行编译和测试：
   ```bash
   cd build && cmake .. && make -j4

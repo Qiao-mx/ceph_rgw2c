@@ -6,18 +6,43 @@
 extern "C" {
 #endif
 
-/* 类型定义 */
-typedef struct { char* id; char* tenant; int32_t type; } rgw_sal_user_id_t;
-typedef struct { char* name; char* tenant; char* marker; char* bucket_id; } rgw_sal_bucket_id_t;
-typedef struct { char* name; char* instance; bool is_null; bool is_current; } rgw_sal_obj_key_t;
+/*============================================================================
+ * 核心类型定义 (与 rgw_sal.h 保持一致)
+ *============================================================================*/
+
+/* 用户 ID 结构 */
+typedef struct {
+    char* id;         /**< 用户 ID */
+    char* tenant;     /**< 租户 */
+    char* swift_name; /**< Swift 用户名 */
+    char* swift_subuser; /**< Swift 子用户 */
+} rgw_sal_user_id_t;
+
+/* 桶标识结构 */
+typedef struct {
+    char* name;         /**< 桶名称 */
+    char* tenant;       /**< 租户 */
+    char* marker;       /**< 桶标记 */
+    char* bucket_id;    /**< 桶 ID */
+} rgw_sal_bucket_id_t;
+
+/* 对象键结构 */
+typedef struct {
+    char* name;       /**< 对象名称 */
+    char* instance;   /**< 对象实例版本 */
+    bool is_null;     /**< 是否为 null 版本 */
+    bool is_current;  /**< 是否为当前版本 */
+} rgw_sal_obj_key_t;
+
+/* 配额信息 */
 typedef struct { 
-    bool enabled; 
-    bool check_on_raw; 
-    uint64_t max_size; 
-    uint64_t max_size_kb; 
-    uint64_t max_objects;
-    uint64_t quota_bytes;        /**< 字节配额 */
-    uint64_t quota_max_objects;  /**< 最大对象数配额 */
+    bool enabled;                 /**< 是否启用 */
+    bool check_on_raw;            /**< 是否检查原始大小 */
+    uint64_t max_size;            /**< 最大大小 */
+    uint64_t max_size_kb;         /**< 最大大小 (KB) */
+    uint64_t max_objects;         /**< 最大对象数 */
+    uint64_t quota_bytes;         /**< 字节配额 */
+    uint64_t quota_max_objects;   /**< 最大对象数配额 */
 } rgw_sal_quota_info_t;
 
 /**
@@ -30,16 +55,32 @@ typedef struct {
     uint64_t successful_ops;   /**< 成功操作数 */
 } rgw_sal_usage_info_t;
 
-typedef struct { uint32_t epoch; char* ver; bool committed; } rgw_sal_obj_version_t;
-typedef struct { rgw_sal_obj_version_t read_version; rgw_sal_obj_version_t write_version; char* obj_tag; char* instance_tag; } rgw_sal_obj_version_tracker_t;
-typedef struct { char* caps; } rgw_sal_user_caps_t;
+/* 版本信息 */
+typedef struct { 
+    uint32_t epoch; 
+    char* ver; 
+    bool committed; 
+} rgw_sal_obj_version_t;
+
+/* 版本跟踪器 */
+typedef struct { 
+    rgw_sal_obj_version_t read_version; 
+    rgw_sal_obj_version_t write_version; 
+    char* obj_tag; 
+    char* instance_tag; 
+} rgw_sal_obj_version_tracker_t;
+
+/* 用户权限 */
+typedef struct { 
+    char* caps; 
+} rgw_sal_user_caps_t;
 
 /**
  * @brief 用户组成员关系
  */
 typedef struct {
     char* group_id;   /**< 组 ID */
-    char* tenant;     /**< 租户 */
+    char* tenant;    /**< 租户 (用作 group_name) */
 } rgw_sal_user_group_t;
 
 /**
@@ -51,24 +92,39 @@ typedef struct {
     size_t capacity;
 } rgw_sal_user_groups_t;
 
-/* 用户 ID 函数 */
+/*============================================================================
+ * 用户 ID 函数
+ *============================================================================*/
+
 rgw_sal_user_id_t* rgw_sal_user_id_create(void);
 void rgw_sal_user_id_destroy(rgw_sal_user_id_t* uid);
 
-/* 桶 ID 函数 */
+/*============================================================================
+ * 桶 ID 函数
+ *============================================================================*/
+
 rgw_sal_bucket_id_t* rgw_sal_bucket_id_create(void);
 void rgw_sal_bucket_id_destroy(rgw_sal_bucket_id_t* bid);
 
-/* 对象键函数 */
+/*============================================================================
+ * 对象键函数
+ *============================================================================*/
+
 rgw_sal_obj_key_t* rgw_sal_obj_key_create(void);
 void rgw_sal_obj_key_destroy(rgw_sal_obj_key_t* key);
 
-/* 用户组函数 */
+/*============================================================================
+ * 用户组函数
+ *============================================================================*/
+
 rgw_sal_user_groups_t* rgw_sal_user_groups_create(void);
 void rgw_sal_user_groups_destroy(rgw_sal_user_groups_t* groups);
 int rgw_sal_user_groups_add(rgw_sal_user_groups_t* groups, const char* group_id, const char* group_name);
 
-/* TOTP 验证函数 */
+/*============================================================================
+ * TOTP 验证函数
+ *============================================================================*/
+
 bool rgw_sal_verify_totp(const char* secret, const char* code, uint64_t timestamp);
 
 /*============================================================================

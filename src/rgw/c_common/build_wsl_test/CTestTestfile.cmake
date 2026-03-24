@@ -1,0 +1,36 @@
+# CMake generated Testfile for 
+# Source directory: /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common
+# Build directory: /mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test
+# 
+# This file includes the relevant testing commands required for 
+# testing this directory and lists subdirectories to be tested as well.
+add_test(test_memory "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_memory")
+set_tests_properties(test_memory PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;198;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cmap "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cmap")
+set_tests_properties(test_cmap PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;199;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cset "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cset")
+set_tests_properties(test_cset PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;200;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_carray "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_carray")
+set_tests_properties(test_carray PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;201;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cstring "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cstring")
+set_tests_properties(test_cstring PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;202;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_coptional "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_coptional")
+set_tests_properties(test_coptional PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;203;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cdeque "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cdeque")
+set_tests_properties(test_cdeque PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;204;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cstack "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cstack")
+set_tests_properties(test_cstack PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;205;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cqueue "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cqueue")
+set_tests_properties(test_cqueue PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;206;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_cpriority_queue "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_cpriority_queue")
+set_tests_properties(test_cpriority_queue PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;207;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_oop "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_oop")
+set_tests_properties(test_oop PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;208;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_errors "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_errors")
+set_tests_properties(test_errors PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;209;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_buffer "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_buffer")
+set_tests_properties(test_buffer PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;210;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_hex "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_hex")
+set_tests_properties(test_hex PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;211;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")
+add_test(test_xml "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/build_wsl_test/test_xml")
+set_tests_properties(test_xml PROPERTIES  _BACKTRACE_TRIPLES "/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;212;add_test;/mnt/d/NAS/ceph-20.1.1/src/rgw/c_common/CMakeLists.txt;0;")

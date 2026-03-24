@@ -242,15 +242,18 @@ if(WITH_RADOSGW_KAFKA_ENDPOINT)
   list(APPEND librgw_common_srcs rgw_kafka.cc)
 endif()
 
-# SAL C Implementation (experimental C-based SAL layer)
-option(WITH_RGW_SAL_C "Enable C SAL implementation (experimental)" OFF)
-if(WITH_RGW_SAL_C)
-  message(STATUS "SAL C implementation: ENABLED (experimental)")
-  list(APPEND librgw_common_srcs sal_c/src/rgw_sal_c_wrapper.cc)
-  list(APPEND librgw_common_srcs rgw_sal_c_bridge.cc)
-  target_include_directories(rgw_common PRIVATE "${CMAKE_SOURCE_DIR}/src/rgw/sal_c/include")
+# SAL C Tests (integrated with main build)
+option(WITH_RGW_SAL_C_TESTS "Build SAL C tests" OFF)
+if(WITH_RGW_SAL_C_TESTS)
+  message(STATUS "SAL C tests: ENABLED")
+  # 构建 c_common 库 (如果尚未构建)
+  if(NOT TARGET rgw_c_common)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/src/rgw/c_common" EXCLUDE_FROM_ALL)
+  endif()
+  # 添加 SAL C 测试子目录
+  add_subdirectory(sal_c/tests)
 else()
-  message(STATUS "SAL C implementation: DISABLED")
+  message(STATUS "SAL C tests: DISABLED")
 endif()
 
 if(WITH_RADOSGW_DBSTORE)
@@ -337,6 +340,27 @@ target_include_directories(rgw_common
   PUBLIC "${CMAKE_SOURCE_DIR}/src/rgw/services"
   PUBLIC "${CMAKE_SOURCE_DIR}/src/rgw"
   PUBLIC "${LUA_INCLUDE_DIR}")
+
+# SAL C Implementation (experimental C-based SAL layer)
+if(WITH_RGW_SAL_C)
+  message(STATUS "SAL C implementation: ENABLED (experimental)")
+  # 构建 c_common 库 (如果尚未构建)
+  if(NOT TARGET rgw_c_common)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/src/rgw/c_common" EXCLUDE_FROM_ALL)
+  endif()
+  # 添加 SAL C 源文件到 rgw_common
+  target_sources(rgw_common PRIVATE
+    "${CMAKE_SOURCE_DIR}/src/rgw/sal_c/src/rgw_sal_c_wrapper.cc"
+    "${CMAKE_SOURCE_DIR}/src/rgw/rgw_sal_c_bridge.cc"
+    "${CMAKE_SOURCE_DIR}/src/rgw/rgw_sal_c_user_impl.cc")
+  # 添加 include 路径
+  target_include_directories(rgw_common PRIVATE
+    "${CMAKE_SOURCE_DIR}/src/rgw/sal_c/include")
+  # 链接 c_common 库
+  target_link_libraries(rgw_common PRIVATE rgw_c_common)
+else()
+  message(STATUS "SAL C implementation: DISABLED")
+endif()
 
 # work around https://github.com/Cyan4973/xxHash/issues/943 for debug builds
 target_compile_definitions(rgw_common PUBLIC

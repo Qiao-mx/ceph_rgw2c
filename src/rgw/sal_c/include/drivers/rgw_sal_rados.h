@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 /*============================================================================
- * RADOS 驱动特定类型
+ * RADOS 驱动特定宏定义
  *============================================================================*/
 
 /* RADOS 上下文池类型 */
@@ -30,34 +30,25 @@ extern "C" {
 /* 分片上传最大分片数 */
 #define RGW_MAX_PART_NUMBER 10000
 
+/*============================================================================
+ * RADOS 驱动特定类型 (前向声明)
+ *============================================================================*/
+
+/* 注意: rados_ioctx_t 和 rados_ctx_pool_t 已由 librados.h 定义 */
+
 /* 前向声明 */
 typedef struct rados_user_impl rados_user_impl_t;
+typedef struct rados_bucket_impl rados_bucket_impl_t;
+typedef struct rados_object_impl rados_object_impl_t;
 
 /**
  * @brief RADOS 对象列表迭代器类型
  */
 typedef void* rados_nobjects_list_t;
 
-/**
- * @brief SAL 对象列表类型
- */
-typedef struct rgw_sal_object_list {
-    void** objects;
-    size_t count;
-    size_t capacity;
-    bool is_truncated;
-    char* next_marker;
-} rgw_sal_object_list_t;
-
-/**
- * @brief SAL 对象条目类型
- */
-typedef struct rgw_sal_object_entry {
-    char* name;
-    char* instance;
-    char* key;
-    void* info;
-} rgw_sal_object_entry_t;
+/*============================================================================
+ * RADOS 驱动特定结构体 (不与 core/types 冲突)
+ *============================================================================*/
 
 /**
  * @brief RADOS 特定的用户扩展信息
@@ -65,6 +56,8 @@ typedef struct rgw_sal_object_entry {
 typedef struct rgw_sal_rados_user_impl {
     void* rados_user;           /**< 内部的 RadosUser* */
     bool user_info_loaded;      /**< 用户信息是否已加载 */
+    char* access_key;           /**< 访问密钥 */
+    char* secret_key;           /**< 秘密密钥 */
 } rgw_sal_rados_user_impl_t;
 
 /**
@@ -72,7 +65,9 @@ typedef struct rgw_sal_rados_user_impl {
  */
 typedef struct rgw_sal_rados_bucket_impl {
     void* rados_bucket;         /**< 内部的 RadosBucket* */
-    bool bucket_info_loaded;    /**< 桶信息是否已加载 */
+    bool bucket_info_loaded;     /**< 桶信息是否已加载 */
+    void* ioctx;                /**< RADOS IoCtx */
+    char* placement_rule;        /**< 放置规则 */
 } rgw_sal_rados_bucket_impl_t;
 
 /**
@@ -81,6 +76,8 @@ typedef struct rgw_sal_rados_bucket_impl {
 typedef struct rgw_sal_rados_object_impl {
     void* rados_object;         /**< 内部的 RadosObject* */
     void* rados_ctx;            /**< 对象上下文 */
+    char* locator;              /**< 对象定位符 */
+    uint64_t obj_size;          /**< 对象大小 */
 } rgw_sal_rados_object_impl_t;
 
 /**
@@ -90,26 +87,32 @@ typedef struct rgw_sal_rados_driver_impl {
     void* rados_store;          /**< 内部的 RadosStore* */
     void* neorados;             /**< neorados 句柄 */
     void* rados;                /**< RGWRados* 句柄 */
+    void* ctx_pool;             /**< 上下文池 (void* 避免依赖) */
 } rgw_sal_rados_driver_impl_t;
 
 /**
- * @brief 桶统计信息结构
+ * @brief RADOS 桶统计信息结构
  */
-typedef struct rgw_sal_bucket_stats {
+typedef struct rgw_sal_rados_bucket_stats {
     int64_t actual_size;        /**< 实际大小 */
     int64_t size;               /**< 大小 */
     int64_t size_rounded;      /**< 对齐后大小 */
     int64_t num_objects;        /**< 对象数量 */
     int64_t size_bytes;        /**< 大小(字节) */
-    int64_t size_kb;            /**< 大小(KB) */
-    int64_t size_md;            /**< 大小(MD) */
-    int64_t size_gb;            /**< 大小(GB) */
-    int64_t size_tb;            /**< 大小(TB) */
     int64_t mtime;              /**< 修改时间 */
-    int64_t object_count;      /**< 对象计数 */
     int num_shards;             /**< 分片数 */
     char max_marker[256];       /**< 最大 marker */
-} rgw_sal_bucket_stats_t;
+} rgw_sal_rados_bucket_stats_t;
+
+/**
+ * @brief RADOS 读回调函数类型
+ *
+ * @param buffer 数据缓冲区
+ * @param buffer_len 缓冲区大小
+ * @param arg 用户参数
+ * @return 读取的字节数
+ */
+typedef int (*rgw_sal_rados_read_callback_t)(char* buffer, size_t buffer_len, void* arg);
 
 /*============================================================================
  * RADOS 驱动工厂函数
@@ -117,11 +120,17 @@ typedef struct rgw_sal_bucket_stats {
 
 /**
  * @brief 创建 RADOS 驱动
- * @param cct Ceph 上下文
- * @param rados_handle RADOS 句柄 (neorados::RADOS)
+ * @param ctx_pool RADOS 上下文池 (可选)
+ * @param user_ctx_pool 用户上下文池 (可选)
  * @return 驱动句柄，失败返回 NULL
  */
-rgw_sal_driver_t* rgw_sal_rados_driver_create(void* cct, void* neorados);
+rgw_sal_driver_t* rgw_sal_rados_driver_create(void* ctx_pool, void* user_ctx_pool);
+
+/**
+ * @brief 销毁 RADOS 驱动
+ * @param driver 驱动实例
+ */
+void rgw_sal_rados_driver_destroy(rgw_sal_driver_t* driver);
 
 /**
  * @brief 获取 RADOS 驱动实现
@@ -131,8 +140,136 @@ rgw_sal_driver_t* rgw_sal_rados_driver_create(void* cct, void* neorados);
 rgw_sal_rados_driver_impl_t* rgw_sal_rados_get_impl(rgw_sal_driver_t* driver);
 
 /*============================================================================
+ * RADOS 用户操作接口
+ *============================================================================*/
+
+/**
+ * @brief 获取用户
+ * @param driver 驱动实例
+ * @param uid 用户 ID
+ * @return 用户实例，或失败时返回 NULL
+ */
+rgw_sal_user_t* rgw_sal_rados_get_user(rgw_sal_driver_t* driver, const rgw_sal_user_id_t* uid);
+
+/**
+ * @brief 释放用户
+ * @param user 用户实例
+ */
+void rgw_sal_rados_user_destroy(rgw_sal_user_t* user);
+
+/**
+ * @brief 克隆用户
+ * @param user 用户实例
+ * @return 克隆的用户，或失败时返回 NULL
+ */
+rgw_sal_user_t* rgw_sal_rados_user_clone(const rgw_sal_user_t* user);
+
+/* 用户属性访问器 */
+const char* rgw_sal_rados_user_get_id(const rgw_sal_user_t* user);
+const char* rgw_sal_rados_user_get_display_name(rgw_sal_user_t* user);
+int rgw_sal_rados_user_set_display_name(rgw_sal_user_t* user, const char* name);
+const char* rgw_sal_rados_user_get_tenant(const rgw_sal_user_t* user);
+uint32_t rgw_sal_rados_user_get_type(const rgw_sal_user_t* user);
+int32_t rgw_sal_rados_user_get_max_buckets(const rgw_sal_user_t* user);
+void rgw_sal_rados_user_set_max_buckets(rgw_sal_user_t* user, int32_t max);
+
+/* 用户属性映射 */
+rgw_sal_attrs_t* rgw_sal_rados_user_get_attrs(rgw_sal_user_t* user);
+
+/*============================================================================
+ * RADOS 桶操作接口
+ *============================================================================*/
+
+/**
+ * @brief 获取桶
+ * @param driver 驱动实例
+ * @param bid 桶 ID
+ * @return 桶实例，或失败时返回 NULL
+ */
+rgw_sal_bucket_t* rgw_sal_rados_get_bucket(rgw_sal_driver_t* driver, const rgw_sal_bucket_id_t* bid);
+
+/**
+ * @brief 释放桶
+ * @param bucket 桶实例
+ */
+void rgw_sal_rados_bucket_destroy(rgw_sal_bucket_t* bucket);
+
+/**
+ * @brief 克隆桶
+ * @param bucket 桶实例
+ * @return 克隆的桶，或失败时返回 NULL
+ */
+rgw_sal_bucket_t* rgw_sal_rados_bucket_clone(const rgw_sal_bucket_t* bucket);
+
+/* 桶属性访问器 */
+const char* rgw_sal_rados_bucket_get_name(const rgw_sal_bucket_t* bucket);
+const char* rgw_sal_rados_bucket_get_tag(rgw_sal_bucket_t* bucket);
+void rgw_sal_rados_bucket_set_tag(rgw_sal_bucket_t* bucket, const char* tag);
+rgw_sal_attrs_t* rgw_sal_rados_bucket_get_attrs(rgw_sal_bucket_t* bucket);
+
+/*============================================================================
+ * RADOS 对象操作接口
+ *============================================================================*/
+
+/**
+ * @brief 获取对象
+ * @param driver 驱动实例
+ * @param bucket 桶实例
+ * @param key 对象键
+ * @return 对象实例，或失败时返回 NULL
+ */
+rgw_sal_object_t* rgw_sal_rados_get_object(rgw_sal_driver_t* driver, rgw_sal_bucket_t* bucket, const rgw_sal_obj_key_t* key);
+
+/**
+ * @brief 释放对象
+ * @param obj 对象实例
+ */
+void rgw_sal_rados_object_destroy(rgw_sal_object_t* obj);
+
+/**
+ * @brief 克隆对象
+ * @param obj 对象实例
+ * @return 克隆的对象，或失败时返回 NULL
+ */
+rgw_sal_object_t* rgw_sal_rados_object_clone(const rgw_sal_object_t* obj);
+
+/* 对象属性访问器 */
+const char* rgw_sal_rados_object_get_name(const rgw_sal_object_t* obj);
+rgw_sal_attrs_t* rgw_sal_rados_object_get_attrs(rgw_sal_object_t* obj);
+void rgw_sal_rados_object_set_atomic(rgw_sal_object_t* obj, bool atomic);
+bool rgw_sal_rados_object_is_atomic(const rgw_sal_object_t* obj);
+
+/*============================================================================
  * RADOS 特定操作
  *============================================================================*/
+
+/**
+ * @brief 初始化 RADOS 集群连接
+ * @param config_file 配置文件路径
+ * @param cluster_name 集群名称
+ * @param flags 连接标志
+ * @return 0 成功，负值失败
+ */
+int rgw_rados_connect(const char* config_file, const char* cluster_name, uint32_t flags);
+
+/**
+ * @brief 断开 RADOS 集群连接
+ */
+void rgw_rados_disconnect(void);
+
+/**
+ * @brief 获取 RADOS IoCtx
+ * @param pool_name 池名称
+ * @param flags 标志
+ * @return IoCtx 句柄
+ */
+void* rgw_rados_get_ioctx(const char* pool_name, uint32_t flags);
+
+/**
+ * @brief 释放 RADOS IoCtx
+ * @param ioctx IoCtx 句柄
+ */
+void rgw_rados_put_ioctx(void* ioctx);
 
 /**
  * @brief 获取集群 ID
@@ -143,9 +280,9 @@ rgw_sal_rados_driver_impl_t* rgw_sal_rados_get_impl(rgw_sal_driver_t* driver);
  * @return 错误码
  */
 int rgw_sal_rados_get_cluster_id(rgw_sal_driver_t* driver,
-                                   char** cluster_id,
-                                   const rgw_sal_dpp_t* dpp,
-                                   rgw_sal_yield_t* y);
+                                  char** cluster_id,
+                                  const rgw_sal_dpp_t* dpp,
+                                  rgw_sal_yield_t* y);
 
 /**
  * @brief 获取用户控制接口
@@ -163,13 +300,9 @@ void* rgw_sal_rados_get_user_ctl(rgw_sal_driver_t* driver);
  * @return 错误码
  */
 int rgw_sal_rados_complete_flush_stats(rgw_sal_driver_t* driver,
-                                          const rgw_sal_user_id_t* owner,
-                                          const rgw_sal_dpp_t* dpp,
-                                          rgw_sal_yield_t* y);
-
-/*============================================================================
- * RADOS 用户操作扩展
- *============================================================================*/
+                                        const rgw_sal_user_id_t* owner,
+                                        const rgw_sal_dpp_t* dpp,
+                                        rgw_sal_yield_t* y);
 
 /**
  * @brief 获取内部 RadosUser 指针
@@ -185,11 +318,7 @@ void* rgw_sal_rados_user_get_internal(rgw_sal_user_t* user);
  * @return SAL 用户句柄
  */
 rgw_sal_user_t* rgw_sal_rados_user_from_internal(rgw_sal_driver_t* driver,
-                                                    void* rados_user);
-
-/*============================================================================
- * RADOS 桶操作扩展
- *============================================================================*/
+                                                  void* rados_user);
 
 /**
  * @brief 获取内部 RadosBucket 指针
@@ -205,11 +334,7 @@ void* rgw_sal_rados_bucket_get_internal(rgw_sal_bucket_t* bucket);
  * @return SAL 桶句柄
  */
 rgw_sal_bucket_t* rgw_sal_rados_bucket_from_internal(rgw_sal_driver_t* driver,
-                                                        void* rados_bucket);
-
-/*============================================================================
- * RADOS 对象操作扩展
- *============================================================================*/
+                                                      void* rados_bucket);
 
 /**
  * @brief 获取内部 RadosObject 指针
@@ -219,210 +344,34 @@ rgw_sal_bucket_t* rgw_sal_rados_bucket_from_internal(rgw_sal_driver_t* driver,
 void* rgw_sal_rados_object_get_internal(rgw_sal_object_t* obj);
 
 /**
- * @brief 从内部对象创建 SAL 对象
- * @param bucket 桶句柄
- * @param rados_object 内部 RadosObject 指针
- * @return SAL 对象句柄
+ * @brief 获取驱动名称
+ * @param driver 驱动句柄
+ * @return 驱动名称字符串
  */
-rgw_sal_object_t* rgw_sal_rados_object_from_internal(rgw_sal_bucket_t* bucket,
-                                                        void* rados_object);
+const char* rgw_sal_rados_driver_get_name(rgw_sal_driver_t* driver);
 
 /**
- * @brief RADOS 读操作准备
- * @param obj 对象句柄
+ * @brief 列出桶
+ * @param driver 驱动句柄
+ * @param owner 所有者
+ * @param prefix 前缀过滤
+ * @param delimiter 分隔符
+ * @param marker 起始标记
+ * @param end_marker 结束标记
+ * @param max_keys 最大返回数量
+ * @param list_all 是否列出所有
+ * @param result 输出：桶列表
  * @param dpp 调试前缀提供者
  * @param y 协程上下文
  * @return 错误码
  */
-int rgw_sal_rados_object_read_prepare(rgw_sal_object_t* obj,
-                                        const rgw_sal_dpp_t* dpp,
-                                        rgw_sal_yield_t* y);
-
-/**
- * @brief RADOS 异步读操作
- * @param obj 对象句柄
- * @param offset 起始偏移
- * @param end 结束偏移
- * @param callback 回调函数
- * @param callback_arg 回调参数
- * @param dpp 调试前缀提供者
- * @param y 协程上下文
- * @return 错误码
- */
-typedef int (*rgw_sal_rados_read_callback_t)(void* arg, const uint8_t* data, size_t len);
-
-int rgw_sal_rados_object_read_iterate(rgw_sal_object_t* obj,
-                                        int64_t offset, int64_t end,
-                                        rgw_sal_rados_read_callback_t callback,
-                                        void* callback_arg,
-                                        const rgw_sal_dpp_t* dpp,
-                                        rgw_sal_yield_t* y);
-
-/**
- * @brief RADOS 获取对象属性
- * @param obj 对象句柄
- * @param name 属性名
- * @param value 输出：属性值
- * @param value_len 输出：值长度
- * @param y 协程上下文
- * @param dpp 调试前缀提供者
- * @return 错误码
- */
-int rgw_sal_rados_object_get_attr(rgw_sal_object_t* obj,
-                                    const char* name,
-                                    uint8_t** value, size_t* value_len,
-                                    rgw_sal_yield_t* y,
-                                    const rgw_sal_dpp_t* dpp);
-
-/*============================================================================
- * 用户序列化函数
- *============================================================================*/
-
-/**
- * @brief 解析用户数据缓冲区
- *
- * @param impl 用户实现
- * @param data 缓冲区数据
- * @param data_len 缓冲区长度
- * @return 错误码
- */
-int parse_user_from_buffer(rados_user_impl_t* impl, const uint8_t* data, size_t data_len);
-
-/**
- * @brief 将用户数据序列化为缓冲区
- *
- * @param impl 用户实现
- * @param buf_size 输出：缓冲区大小
- * @return 序列化的缓冲区，失败返回 NULL
- */
-uint8_t* serialize_user_to_buffer(rados_user_impl_t* impl, size_t* buf_size);
-
-/**
- * @brief 释放序列化缓冲区
- *
- * @param buffer 缓冲区
- */
-void rgw_sal_free_buffer(uint8_t* buffer);
-
-/*============================================================================
- * VTable 类型定义
- *============================================================================*/
-
-/* 前向声明 */
-struct rgw_sal_driver;
-struct rgw_sal_user;
-struct rgw_sal_bucket;
-struct rgw_sal_object;
-
-/**
- * @brief 驱动 vtable
- */
-typedef struct rgw_sal_driver_vtable {
-    void (*destroy)(struct rgw_sal_driver* driver);
-    int (*initialize)(struct rgw_sal_driver* driver, void* cct, void* dpp);
-    const char* (*get_name)(const struct rgw_sal_driver* driver);
-    int (*get_cluster_id)(struct rgw_sal_driver* driver, char** cluster_id, void* dpp, void* y);
-    rgw_sal_user_t* (*get_user)(struct rgw_sal_driver* driver, const rgw_sal_user_id_t* uid);
-    int (*get_user_by_access_key)(struct rgw_sal_driver* driver, const char* key, rgw_sal_user_t** user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*get_user_by_email)(struct rgw_sal_driver* driver, const char* email, rgw_sal_user_t** user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*get_user_by_swift)(struct rgw_sal_driver* driver, const char* swift_user, rgw_sal_user_t** user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*get_bucket)(struct rgw_sal_driver* driver, const rgw_user_t* user, const char* bucket_name, rgw_sal_bucket_t** bucket, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*list_buckets)(struct rgw_sal_driver* driver, const rgw_sal_user_t* user, const char* marker, const char* prefix, uint32_t max_keys, bool force, rgw_sal_bucket_list_t** list, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    rgw_sal_object_t* (*get_object)(struct rgw_sal_driver* driver, struct rgw_sal_bucket* bucket, const struct rgw_sal_obj_key* key);
-} rgw_sal_driver_vtable_t;
-
-/**
- * @brief 用户 vtable
- */
-typedef struct rgw_sal_user_vtable {
-    void* (*clone)(const struct rgw_sal_user* user);
-    void (*destroy)(struct rgw_sal_user* user);
-    const char* (*get_id)(const struct rgw_sal_user* user);
-    const char* (*get_display_name)(const struct rgw_sal_user* user);
-    int (*set_display_name)(struct rgw_sal_user* user, const char* name);
-    const char* (*get_tenant)(const struct rgw_sal_user* user);
-    uint32_t (*get_type)(const struct rgw_sal_user* user);
-    int32_t (*get_max_buckets)(const struct rgw_sal_user* user);
-    int (*set_max_buckets)(struct rgw_sal_user* user, int32_t max_buckets);
-    void* (*get_attrs)(struct rgw_sal_user* user);
-    int (*set_attrs)(struct rgw_sal_user* user, void* attrs);
-    int (*load)(struct rgw_sal_user* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*store)(struct rgw_sal_user* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y, bool exclusive);
-    int (*remove)(struct rgw_sal_user* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*read_attrs)(struct rgw_sal_user* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    int (*merge_and_store_attrs)(struct rgw_sal_user* user, const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
-    const char* (*get_ns)(const struct rgw_sal_user* user);
-    int (*set_ns)(struct rgw_sal_user* user, const char* ns);
-    void (*clear_ns)(struct rgw_sal_user* user);
-    /* 额外函数 */
-    int (*set_info)(struct rgw_sal_user* user, const void* info);
-    int (*get_info)(struct rgw_sal_user* user, void** info);
-    const void* (*get_caps)(const struct rgw_sal_user* user);
-    const void* (*get_version_tracker)(const struct rgw_sal_user* user);
-    int (*read_usage)(struct rgw_sal_user* user, const char* start_date, const char* end_date, uint32_t max_entries, bool* is_truncated, void* iter, void* y);
-    int (*trim_usage)(struct rgw_sal_user* user, const char* start_date, const char* end_date);
-    int (*verify_mfa)(struct rgw_sal_user* user, const char* mfa_token, bool* verified, const rgw_sal_dpp_t* dpp);
-    int (*list_groups)(struct rgw_sal_user* user, const char* marker, uint32_t max_groups, void** groups);
-} rgw_sal_user_vtable_t;
-
-/**
- * @brief 桶 vtable
- */
-typedef struct rgw_sal_bucket_vtable {
-    void* (*clone)(const struct rgw_sal_bucket* bucket);
-    void (*destroy)(struct rgw_sal_bucket* bucket);
-    const char* (*get_name)(const struct rgw_sal_bucket* bucket);
-    const char* (*get_tenant)(const struct rgw_sal_bucket* bucket);
-    const char* (*get_marker)(const struct rgw_sal_bucket* bucket);
-    void* (*get_info)(struct rgw_sal_bucket* bucket);
-    void* (*get_owner)(struct rgw_sal_bucket* bucket);
-    void* (*get_attrs)(struct rgw_sal_bucket* bucket);
-    int (*set_attrs)(struct rgw_sal_bucket* bucket, void* attrs);
-    int (*list)(struct rgw_sal_bucket* bucket, void* dpp, void* y, const char* prefix, const char* delimiter, const char* marker, uint32_t max_keys, void** list);
-    int (*load)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* objv);
-    int (*store)(struct rgw_sal_bucket* bucket, void* dpp, void* y, bool exclusive, void* objv);
-    int (*remove)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* objv);
-    int (*create)(struct rgw_sal_bucket* bucket, void* dpp, void* y, bool exclusive, void* objv);
-    int (*delete_bucket)(struct rgw_sal_bucket* bucket, void* dpp, void* y, bool delete_children, void* objv);
-    int (*rename)(struct rgw_sal_bucket* bucket, void* dpp, void* y, const char* new_bucket_name, void* objv);
-    int (*set_acl)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* acl);
-    int (*get_policy)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void** policy);
-    int (*set_policy)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* policy);
-    /* 额外函数 */
-    const char* (*get_tag)(const struct rgw_sal_bucket* bucket);
-    int (*set_tag)(struct rgw_sal_bucket* bucket, const char* tag);
-    int (*get_usage)(struct rgw_sal_bucket* bucket, uint32_t* rgw_usage_num_entries, void* y);
-    int (*read_stats)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* stats);
-    int (*read_stats_async)(struct rgw_sal_bucket* bucket, void* cb, void* args);
-    int (*complete_stats)(struct rgw_sal_bucket* bucket, void* dpp, void* y);
-    int (*sync)(struct rgw_sal_bucket* bucket, void* dpp, void* y);
-    int (*drain)(struct rgw_sal_bucket* bucket, void* dpp, void* y);
-    int (*check_object_index)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void** list);
-    int (*fix_object_index)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* list);
-    int (*check_bucket_index)(struct rgw_sal_bucket* bucket, void* dpp, void* y, void* list);
-} rgw_sal_bucket_vtable_t;
-
-/**
- * @brief 对象 vtable
- */
-typedef struct rgw_sal_object_vtable {
-    void* (*clone)(const struct rgw_sal_object* obj);
-    void (*destroy)(struct rgw_sal_object* obj);
-    const char* (*get_name)(const struct rgw_sal_object* obj);
-    const char* (*get_instance)(const struct rgw_sal_object* obj);
-    bool (*is_null)(const struct rgw_sal_object* obj);
-    void* (*get_attrs)(struct rgw_sal_object* obj);
-    int (*set_attrs)(struct rgw_sal_object* obj, void* attrs);
-    int (*read)(struct rgw_sal_object* obj, void* dpp, void* y, uint64_t offset, size_t len, uint8_t* buf, size_t* bytes_read);
-    int (*write)(struct rgw_sal_object* obj, void* dpp, void* y, uint64_t offset, size_t len, const uint8_t* buf, size_t* bytes_written);
-    int (*delete_obj)(struct rgw_sal_object* obj, void* dpp, void* y, uint32_t flags);
-    int (*load_state)(struct rgw_sal_object* obj, void* dpp, void* y);
-    int (*get_obj_attrs)(struct rgw_sal_object* obj, void* dpp, void* y);
-    int (*set_obj_attrs)(struct rgw_sal_object* obj, void* dpp, void* y, void* attrs);
-    bool (*is_atomic)(const struct rgw_sal_object* obj);
-    void (*set_atomic)(struct rgw_sal_object* obj);
-    bool (*is_expired)(const struct rgw_sal_object* obj);
-} rgw_sal_object_vtable_t;
+int rgw_sal_rados_list_buckets(rgw_sal_driver_t* driver,
+                                rgw_sal_user_t* owner,
+                                const char* prefix, const char* delimiter,
+                                const char* marker, const char* end_marker,
+                                uint32_t max_keys, bool list_all,
+                                rgw_sal_bucket_list_t** result,
+                                const rgw_sal_dpp_t* dpp, rgw_sal_yield_t* y);
 
 #ifdef __cplusplus
 }

@@ -103,8 +103,9 @@ static void dbstore_driver_destroy(rgw_sal_driver_t* driver) {
     dbstore_driver_impl_t* impl = (dbstore_driver_impl_t*)driver->impl;
     if (impl) {
         /* 关闭数据库连接 */
-        if (impl->db_handle && sqlite3_close_fn) {
-            sqlite3_close_fn(impl->db_handle);
+        if (impl->db_handle) {
+            rgw_sqlite_close(impl->db_handle);
+            impl->db_handle = NULL;
         }
         free(impl);
     }
@@ -117,17 +118,14 @@ static int dbstore_driver_initialize(rgw_sal_driver_t* driver, void* cct, const 
     dbstore_driver_impl_t* impl = (dbstore_driver_impl_t*)driver->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    /* 加载 SQLite 函数 */
-    load_sqlite_functions();
-
-    /* 打开数据库 (仅当有 SQLite 库时) */
-    if (impl->db_path[0] && sqlite3_open_fn) {
-        int ret = sqlite3_open_fn(impl->db_path, &impl->db_handle);
-        if (ret != 0) {
+    /* 打开数据库 (仅当有路径时) */
+    if (impl->db_path[0]) {
+        int ret = rgw_sqlite_open(impl->db_path, &impl->db_handle);
+        if (ret != RGW_SQLITE_OK) {
             return RGW_SAL_ERR_IO_ERROR;
         }
     } else {
-        /* 无 SQLite 库时使用内存模式 */
+        /* 无路径时使用内存模式 */
         impl->db_handle = NULL;
     }
 
@@ -2905,8 +2903,8 @@ int rgw_sal_dbstore_shutdown_db(rgw_sal_driver_t* driver) {
     dbstore_driver_impl_t* impl = (dbstore_driver_impl_t*)driver->impl;
     if (!impl) return RGW_SAL_ERR_INVALID_ARG;
 
-    if (impl->db_handle && sqlite3_close_fn) {
-        sqlite3_close_fn(impl->db_handle);
+    if (impl->db_handle) {
+        rgw_sqlite_close(impl->db_handle);
         impl->db_handle = NULL;
     }
 

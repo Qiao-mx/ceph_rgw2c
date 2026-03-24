@@ -139,7 +139,7 @@ const char* rgw_error_string(rgw_error_code_t code)
             return "Connection failed";
         case RGW_ERR_PROTOCOL_ERROR:
             return "Protocol error";
-        case RGW_ERR_UNKNOWN:
+        case RGW_UNKNOWN:
         default:
             return "Unknown error";
     }

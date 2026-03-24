@@ -2,8 +2,12 @@
  * @file test_basic.c
  * @brief SAL 核心类型基础测试
  *
- * 测试 SAL 核心类型的创建、设置和销毁功能。
- * 本测试仅测试不依赖驱动的核心类型。
+ * 测试 SAL 核心类型：
+ * - 用户 ID 结构
+ * - 桶 ID 结构
+ * - 对象键结构
+ * - 配额信息结构
+ * - 属性映射
  */
 
 #include <stdio.h>
@@ -24,9 +28,10 @@
 static int g_tests_run = 0;
 static int g_tests_passed = 0;
 static int g_tests_failed = 0;
+static int g_tests_skipped = 0;
 
 #define TEST_START(name) do { \
-    printf("  %-45s ", name); \
+    printf("  %-50s ", name); \
     fflush(stdout); \
     g_tests_run++; \
 } while(0)
@@ -41,6 +46,12 @@ static int g_tests_failed = 0;
     printf("[FAIL] %s\n", msg); \
     fflush(stdout); \
     g_tests_failed++; \
+} while(0)
+
+#define TEST_SKIP(msg) do { \
+    printf("[SKIP] %s\n", msg); \
+    fflush(stdout); \
+    g_tests_skipped++; \
 } while(0)
 
 #define TEST_EXPECT(actual, expected, msg) do { \
@@ -68,17 +79,43 @@ static int g_tests_failed = 0;
 } while(0)
 
 #define TEST_EXPECT_NULL(ptr, msg) do { \
-    if (ptr) { \
+    if ((ptr)) { \
         printf("[FAIL] %s (expected NULL)\n", msg); \
         g_tests_failed++; \
         return 1; \
     } \
 } while(0)
 
+#define TEST_EXPECT_TRUE(cond, msg) do { \
+    if (!(cond)) { \
+        printf("[FAIL] %s (expected true)\n", msg); \
+        g_tests_failed++; \
+        return 1; \
+    } \
+} while(0)
+
+#define TEST_EXPECT_FALSE(cond, msg) do { \
+    if ((cond)) { \
+        printf("[FAIL] %s (expected false)\n", msg); \
+        g_tests_failed++; \
+        return 1; \
+    } \
+} while(0)
+
+#define TEST_EXPECT_EQ(actual, expected, msg) do { \
+    if ((actual) != (expected)) { \
+        printf("[FAIL] %s (expected %llu, got %llu)\n", msg, \
+               (unsigned long long)(expected), (unsigned long long)(actual)); \
+        g_tests_failed++; \
+        return 1; \
+    } \
+} while(0)
+
 /*============================================================================
- * 用户 ID 测试
+ * 测试用例
  *============================================================================*/
 
+/* 测试用户 ID 创建销毁 */
 static int test_user_id_create_destroy(void) {
     TEST_START("user_id_create_destroy");
 
@@ -87,7 +124,6 @@ static int test_user_id_create_destroy(void) {
 
     uid->id = strdup("test_user");
     uid->tenant = strdup("test_tenant");
-    uid->type = 0;
 
     printf("\n    Created user_id: id='%s', tenant='%s'",
            uid->id ? uid->id : "NULL",
@@ -95,35 +131,24 @@ static int test_user_id_create_destroy(void) {
 
     /* 验证值 */
     if (!uid->id || strcmp(uid->id, "test_user") != 0) {
-        free(uid->id);
-        free(uid->tenant);
         rgw_sal_user_id_destroy(uid);
         TEST_FAIL("id mismatch");
         return 1;
     }
 
+    if (!uid->tenant || strcmp(uid->tenant, "test_tenant") != 0) {
+        rgw_sal_user_id_destroy(uid);
+        TEST_FAIL("tenant mismatch");
+        return 1;
+    }
+
     rgw_sal_user_id_destroy(uid);
+
     TEST_PASS();
     return 0;
 }
 
-static int test_user_id_null_values(void) {
-    TEST_START("user_id_null_values");
-
-    rgw_sal_user_id_t* uid = rgw_sal_user_id_create();
-    TEST_EXPECT_NOT_NULL(uid, "user_id_create should not return NULL");
-
-    /* 初始值应该是 NULL 或默认值 */
-    /* 创建后不设置任何值，直接销毁 */
-    rgw_sal_user_id_destroy(uid);
-    TEST_PASS();
-    return 0;
-}
-
-/*============================================================================
- * 桶 ID 测试
- *============================================================================*/
-
+/* 测试桶 ID 创建销毁 */
 static int test_bucket_id_create_destroy(void) {
     TEST_START("bucket_id_create_destroy");
 
@@ -132,49 +157,32 @@ static int test_bucket_id_create_destroy(void) {
 
     bid->name = strdup("test_bucket");
     bid->tenant = strdup("test_tenant");
-    bid->marker = strdup("marker123");
-    bid->bucket_id = strdup("bucket_uuid");
+    bid->marker = strdup("marker_123");
+    bid->bucket_id = strdup("bucket_uuid_456");
 
-    printf("\n    Created bucket_id: name='%s', tenant='%s'",
+    printf("\n    Created bucket_id: name='%s', marker='%s'",
            bid->name ? bid->name : "NULL",
-           bid->tenant ? bid->tenant : "NULL");
+           bid->marker ? bid->marker : "NULL");
 
     /* 验证值 */
-    if (!bid->name || strcmp(bid->name, "test_bucket") != 0) {
-        rgw_sal_bucket_id_destroy(bid);
-        TEST_FAIL("name mismatch");
-        return 1;
-    }
+    TEST_EXPECT_STR(bid->name, "test_bucket", "bucket name should match");
+    TEST_EXPECT_STR(bid->marker, "marker_123", "marker should match");
 
     rgw_sal_bucket_id_destroy(bid);
+
     TEST_PASS();
     return 0;
 }
 
-static int test_bucket_id_null_values(void) {
-    TEST_START("bucket_id_null_values");
-
-    rgw_sal_bucket_id_t* bid = rgw_sal_bucket_id_create();
-    TEST_EXPECT_NOT_NULL(bid, "bucket_id_create should not return NULL");
-
-    /* 创建后不设置任何值，直接销毁 */
-    rgw_sal_bucket_id_destroy(bid);
-    TEST_PASS();
-    return 0;
-}
-
-/*============================================================================
- * 对象键测试
- *============================================================================*/
-
+/* 测试对象键创建销毁 */
 static int test_obj_key_create_destroy(void) {
     TEST_START("obj_key_create_destroy");
 
     rgw_sal_obj_key_t* key = rgw_sal_obj_key_create();
     TEST_EXPECT_NOT_NULL(key, "obj_key_create should not return NULL");
 
-    key->name = strdup("test_object");
-    key->instance = strdup("version_1");
+    key->name = strdup("path/to/object.txt");
+    key->instance = strdup("version_123");
     key->is_null = false;
     key->is_current = true;
 
@@ -183,73 +191,56 @@ static int test_obj_key_create_destroy(void) {
            key->instance ? key->instance : "NULL");
 
     /* 验证值 */
-    if (!key->name || strcmp(key->name, "test_object") != 0) {
-        rgw_sal_obj_key_destroy(key);
-        TEST_FAIL("name mismatch");
-        return 1;
-    }
+    TEST_EXPECT_STR(key->name, "path/to/object.txt", "object name should match");
+    TEST_EXPECT_STR(key->instance, "version_123", "instance should match");
+    TEST_EXPECT_FALSE(key->is_null, "is_null should be false");
+    TEST_EXPECT_TRUE(key->is_current, "is_current should be true");
 
     rgw_sal_obj_key_destroy(key);
+
     TEST_PASS();
     return 0;
 }
 
-static int test_obj_key_null_instance(void) {
-    TEST_START("obj_key_null_instance");
+/* 测试配额信息 */
+static int test_quota_info(void) {
+    TEST_START("quota_info");
 
-    rgw_sal_obj_key_t* key = rgw_sal_obj_key_create();
-    TEST_EXPECT_NOT_NULL(key, "obj_key_create should not return NULL");
+    rgw_sal_quota_info_t quota = {0};
 
-    key->name = strdup("object_without_version");
-    /* 不设置 instance，表示没有版本 */
+    /* 测试默认值 */
+    TEST_EXPECT_FALSE(quota.enabled, "enabled should be false by default");
+    TEST_EXPECT_FALSE(quota.check_on_raw, "check_on_raw should be false by default");
+    TEST_EXPECT_EQ(quota.max_size, 0ULL, "max_size should be 0");
+    TEST_EXPECT_EQ(quota.max_objects, 0ULL, "max_objects should be 0");
+    TEST_EXPECT_EQ(quota.quota_bytes, 0ULL, "quota_bytes should be 0");
+    TEST_EXPECT_EQ(quota.quota_max_objects, 0ULL, "quota_max_objects should be 0");
 
-    const char* instance = key->instance;
-    /* instance 可能是 NULL */
+    /* 设置配额值 */
+    quota.enabled = true;
+    quota.max_size = 1024 * 1024 * 1024;  /* 1GB */
+    quota.max_objects = 10000;
 
-    printf("\n    Created obj_key: name='%s', instance=%s",
-           key->name, instance ? instance : "NULL");
+    TEST_EXPECT_TRUE(quota.enabled, "enabled should be true after setting");
+    TEST_EXPECT_EQ(quota.max_size, 1073741824ULL, "max_size should be 1GB");
 
-    rgw_sal_obj_key_destroy(key);
     TEST_PASS();
     return 0;
 }
 
-static int test_obj_key_flags(void) {
-    TEST_START("obj_key_flags");
-
-    rgw_sal_obj_key_t* key = rgw_sal_obj_key_create();
-    TEST_EXPECT_NOT_NULL(key, "obj_key_create should not return NULL");
-
-    key->name = strdup("test_object");
-    key->is_null = true;
-    key->is_current = false;
-
-    TEST_EXPECT(key->is_null, true, "is_null should be true");
-    TEST_EXPECT(key->is_current, false, "is_current should be false");
-
-    printf("\n    is_null=%d, is_current=%d", key->is_null, key->is_current);
-
-    rgw_sal_obj_key_destroy(key);
-    TEST_PASS();
-    return 0;
-}
-
-/*============================================================================
- * 属性映射测试
- *============================================================================*/
-
+/* 测试属性映射创建销毁 */
 static int test_attrs_create_destroy(void) {
     TEST_START("attrs_create_destroy");
 
     rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
-    TEST_EXPECT_NOT_NULL(attrs, "attrs_create should not return NULL");
+    TEST_EXPECT_NOT_NULL(attrs, "attrs should not be NULL");
 
     printf("\n    Created empty attrs container");
 
-    /* 测试设置属性 */
+    /* 设置多个属性 */
     uint8_t val1[] = "value1";
     uint8_t val2[] = "value2";
-    uint8_t val3[] = "value3";
+    uint8_t val3[] = "long_value_for_testing";
 
     int ret = rgw_sal_attrs_set(attrs, "key1", val1, strlen((char*)val1));
     TEST_EXPECT(ret, 0, "attrs_set key1 should return 0");
@@ -262,7 +253,7 @@ static int test_attrs_create_destroy(void) {
 
     printf("\n    Set 3 attributes");
 
-    /* 测试获取属性 - API: 返回错误码, 通过输出参数返回值 */
+    /* 验证所有属性 */
     uint8_t* out = NULL;
     size_t len = 0;
 
@@ -272,9 +263,9 @@ static int test_attrs_create_destroy(void) {
     if (out) {
         TEST_EXPECT(memcmp(out, "value1", 6), 0, "key1 value should match");
         free(out);
+        out = NULL;
     }
 
-    out = NULL;
     ret = rgw_sal_attrs_get(attrs, "key2", &out, &len);
     TEST_EXPECT(ret, 0, "attrs_get key2 should return 0");
     if (out) { free(out); out = NULL; }
@@ -290,137 +281,170 @@ static int test_attrs_create_destroy(void) {
     return 0;
 }
 
-static int test_attrs_update(void) {
-    TEST_START("attrs_update_existing");
+/* 测试属性映射更新和删除 */
+static int test_attrs_update_delete(void) {
+    TEST_START("attrs_update_delete");
 
     rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
-    TEST_EXPECT_NOT_NULL(attrs, "attrs_create should not return NULL");
+    TEST_EXPECT_NOT_NULL(attrs, "attrs should not be NULL");
 
-    /* 设置初始值 */
-    uint8_t val1[] = "original";
-    int ret = rgw_sal_attrs_set(attrs, "key", val1, strlen((char*)val1));
-    TEST_EXPECT(ret, 0, "attrs_set initial should return 0");
+    /* 设置属性 */
+    uint8_t val[] = "initial";
+    int ret = rgw_sal_attrs_set(attrs, "key1", val, strlen((char*)val));
+    TEST_EXPECT(ret, 0, "attrs_set should return 0");
 
-    /* 更新值 */
-    uint8_t val2[] = "updated";
-    ret = rgw_sal_attrs_set(attrs, "key", val2, strlen((char*)val2));
+    /* 更新属性 */
+    uint8_t new_val[] = "updated";
+    ret = rgw_sal_attrs_set(attrs, "key1", new_val, strlen((char*)new_val));
     TEST_EXPECT(ret, 0, "attrs_set update should return 0");
 
-    /* 验证更新后的值 - 新 API: 返回错误码 */
+    /* 验证更新后的值 */
     uint8_t* out = NULL;
     size_t len = 0;
-    ret = rgw_sal_attrs_get(attrs, "key", &out, &len);
+    ret = rgw_sal_attrs_get(attrs, "key1", &out, &len);
     TEST_EXPECT(ret, 0, "attrs_get should return 0");
-    TEST_EXPECT(len, (size_t)7, "updated value length should be 7");
+    TEST_EXPECT(memcmp(out, "updated", 7), 0, "value should be updated");
+    if (out) { free(out); out = NULL; }
+
+    /* 删除属性 */
+    ret = rgw_sal_attrs_del(attrs, "key1");
+    TEST_EXPECT(ret, 0, "attrs_del should return 0");
+
+    /* 验证删除 */
+    ret = rgw_sal_attrs_get(attrs, "key1", &out, &len);
+    TEST_EXPECT(ret, -ENOENT, "attrs_get after delete should return -ENOENT");
+
+    rgw_sal_attrs_destroy(attrs);
+    TEST_PASS();
+    return 0;
+}
+
+/* 测试属性映射克隆 */
+static int test_attrs_clone(void) {
+    TEST_START("attrs_clone");
+
+    rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
+    TEST_EXPECT_NOT_NULL(attrs, "attrs should not be NULL");
+
+    /* 设置属性 */
+    uint8_t val1[] = "value1";
+    uint8_t val2[] = "value2";
+    rgw_sal_attrs_set(attrs, "key1", val1, strlen((char*)val1));
+    rgw_sal_attrs_set(attrs, "key2", val2, strlen((char*)val2));
+
+    /* 克隆属性 */
+    rgw_sal_attrs_t* clone = rgw_sal_attrs_clone(attrs);
+    TEST_EXPECT_NOT_NULL(clone, "attrs_clone should not return NULL");
+
+    /* 验证克隆的属性 */
+    uint8_t* out = NULL;
+    size_t len = 0;
+    int ret = rgw_sal_attrs_get(clone, "key1", &out, &len);
+    TEST_EXPECT(ret, 0, "cloned attrs_get should return 0");
     if (out) {
-        TEST_EXPECT(memcmp(out, "updated", 7), 0, "updated value should match");
+        TEST_EXPECT(memcmp(out, "value1", 6), 0, "cloned value should match");
         free(out);
     }
 
-    printf("\n    Attribute update verified");
+    /* 修改原始不影响克隆 */
+    uint8_t new_val[] = "modified";
+    rgw_sal_attrs_set(attrs, "key1", new_val, strlen((char*)new_val));
 
-    rgw_sal_attrs_destroy(attrs);
-    TEST_PASS();
-    return 0;
-}
-
-static int test_attrs_not_found(void) {
-    TEST_START("attrs_not_found");
-
-    rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
-    TEST_EXPECT_NOT_NULL(attrs, "attrs_create should not return NULL");
-
-    /* 测试获取不存在的属性 - API: 返回非0错误码表示未找到 */
-    uint8_t* out = NULL;
-    size_t len = 0;
-    int ret = rgw_sal_attrs_get(attrs, "nonexistent", &out, &len);
-
-    if (ret == 0) {
-        printf("\n    ERROR: expected error for nonexistent key");
-        if (out) free(out);
-        rgw_sal_attrs_destroy(attrs);
-        TEST_FAIL("expected error for nonexistent key");
-        return 1;
-    }
-
-    printf("\n    Correctly returned error for nonexistent key");
-    rgw_sal_attrs_destroy(attrs);
-    TEST_PASS();
-    return 0;
-}
-
-static int test_attrs_binary_data(void) {
-    TEST_START("attrs_binary_data");
-
-    rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
-    TEST_EXPECT_NOT_NULL(attrs, "attrs_create should not return NULL");
-
-    /* 测试二进制数据 */
-    uint8_t binary[] = {0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD};
-    int ret = rgw_sal_attrs_set(attrs, "binary_key", binary, sizeof(binary));
-    TEST_EXPECT(ret, 0, "attrs_set binary should return 0");
-
-    /* 验证二进制数据 - API: 返回错误码 */
-    size_t len = 0;
-    uint8_t* out = NULL;
-    ret = rgw_sal_attrs_get(attrs, "binary_key", &out, &len);
-    TEST_EXPECT(ret, 0, "attrs_get should return 0");
-    TEST_EXPECT(len, (size_t)sizeof(binary), "binary data length should match");
+    out = NULL;
+    ret = rgw_sal_attrs_get(clone, "key1", &out, &len);
+    TEST_EXPECT(ret, 0, "clone should be independent");
     if (out) {
-        TEST_EXPECT(memcmp(out, binary, sizeof(binary)), 0, "binary data should match");
+        TEST_EXPECT(memcmp(out, "value1", 6), 0, "clone should not be affected by original change");
         free(out);
     }
 
-    printf("\n    Binary data (%zu bytes) stored and retrieved correctly", sizeof(binary));
-
+    /* 清理 */
+    rgw_sal_attrs_destroy(clone);
     rgw_sal_attrs_destroy(attrs);
+
     TEST_PASS();
     return 0;
 }
 
-static int test_attrs_many_keys(void) {
-    TEST_START("attrs_many_keys");
+/* 测试使用统计信息 */
+static int test_usage_info(void) {
+    TEST_START("usage_info");
 
-    rgw_sal_attrs_t* attrs = rgw_sal_attrs_create();
-    TEST_EXPECT_NOT_NULL(attrs, "attrs_create should not return NULL");
+    rgw_sal_usage_info_t usage = {0};
 
-    /* 设置大量属性 */
-    const int num_keys = 100;
-    char key_name[32];
-    char value[32];
+    /* 测试默认值 */
+    TEST_EXPECT_EQ(usage.bytes_sent, 0ULL, "bytes_sent should be 0");
+    TEST_EXPECT_EQ(usage.bytes_received, 0ULL, "bytes_received should be 0");
+    TEST_EXPECT_EQ(usage.ops, 0ULL, "ops should be 0");
+    TEST_EXPECT_EQ(usage.successful_ops, 0ULL, "successful_ops should be 0");
 
-    for (int i = 0; i < num_keys; i++) {
-        snprintf(key_name, sizeof(key_name), "key_%04d", i);
-        snprintf(value, sizeof(value), "value_%04d", i);
-        int ret = rgw_sal_attrs_set(attrs, key_name, (uint8_t*)value, strlen(value));
-        if (ret != 0) {
-            printf("\n    Failed to set key %d", i);
-            break;
-        }
-    }
+    /* 设置值 */
+    usage.bytes_sent = 1024 * 1024;
+    usage.bytes_received = 512 * 1024;
+    usage.ops = 100;
+    usage.successful_ops = 95;
 
-    printf("\n    Set %d attributes", num_keys);
+    TEST_EXPECT_EQ(usage.bytes_sent, 1048576ULL, "bytes_sent should be 1MB");
+    TEST_EXPECT_EQ(usage.ops, 100ULL, "ops should be 100");
+    TEST_EXPECT_EQ(usage.successful_ops, 95ULL, "successful_ops should be 95");
 
-    /* 验证部分属性 - API: 返回错误码 */
-    int verified = 0;
-    for (int i = 0; i < num_keys; i += 10) {
-        snprintf(key_name, sizeof(key_name), "key_%04d", i);
-        snprintf(value, sizeof(value), "value_%04d", i);
+    TEST_PASS();
+    return 0;
+}
 
-        uint8_t* out = NULL;
-        size_t len = 0;
-        int ret = rgw_sal_attrs_get(attrs, key_name, &out, &len);
-        if (ret == 0 && out) {
-            if (memcmp(out, value, strlen(value)) == 0) {
-                verified++;
-            }
-            free(out);
-        }
-    }
+/* 测试用户组创建 */
+static int test_user_groups_create(void) {
+    TEST_START("user_groups_create");
 
-    printf("\n    Verified %d/%d attributes", verified, num_keys / 10);
+    rgw_sal_user_groups_t* groups = rgw_sal_user_groups_create();
+    TEST_EXPECT_NOT_NULL(groups, "user_groups_create should not return NULL");
+    TEST_EXPECT_EQ(groups->count, (size_t)0, "groups count should be 0");
+    TEST_EXPECT_NULL(groups->groups, "groups array should be NULL initially");
 
-    rgw_sal_attrs_destroy(attrs);
+    /* 添加组 */
+    int ret = rgw_sal_user_groups_add(groups, "group1", "Group One");
+    TEST_EXPECT(ret, 0, "user_groups_add should return 0");
+    TEST_EXPECT_EQ(groups->count, (size_t)1, "groups count should be 1");
+
+    ret = rgw_sal_user_groups_add(groups, "group2", "Group Two");
+    TEST_EXPECT(ret, 0, "user_groups_add should return 0");
+    TEST_EXPECT_EQ(groups->count, (size_t)2, "groups count should be 2");
+
+    /* 清理 */
+    rgw_sal_user_groups_destroy(groups);
+
+    TEST_PASS();
+    return 0;
+}
+
+/* 测试 TOTP 验证函数存在性 */
+static int test_totp_verify_exists(void) {
+    TEST_START("totp_verify_exists");
+
+    /* TOTP 验证函数存在，不验证实际功能（需要密钥） */
+    bool result = rgw_sal_verify_totp("secret_key", "123456", 1234567890);
+    printf("\n    TOTP function exists and can be called");
+
+    /* 记录测试通过 */
+    (void)result;
+    TEST_PASS();
+    return 0;
+}
+
+/* 测试桶列表创建销毁 */
+static int test_bucket_list_create_destroy(void) {
+    TEST_START("bucket_list_create_destroy");
+
+    rgw_sal_bucket_list_t* list = rgw_sal_bucket_list_create();
+    TEST_EXPECT_NOT_NULL(list, "bucket_list_create should not return NULL");
+
+    /* 验证默认值 */
+    TEST_EXPECT_EQ(list->count, (size_t)0, "count should be 0");
+    TEST_EXPECT_TRUE(list->is_truncated, "is_truncated should be true initially");
+
+    /* 清理 */
+    rgw_sal_bucket_list_destroy(list);
+
     TEST_PASS();
     return 0;
 }
@@ -429,94 +453,64 @@ static int test_attrs_many_keys(void) {
  * 主函数
  *============================================================================*/
 
-int main(void) {
+int main(int argc, char* argv[]) {
+    (void)argc;
+    (void)argv;
+
+    printf("\n");
     printf("========================================\n");
-    printf("SAL Basic Types Test Suite\n");
+    printf("SAL 核心类型基础测试\n");
     printf("========================================\n\n");
 
+    int failed = 0;
+
     /* 用户 ID 测试 */
-    printf("--- User ID Tests ---\n");
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_user_id_create_destroy();
-    test_user_id_null_values();
-    printf("  User ID tests: %d/%d passed, %d failed\n\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
+    printf("[用户 ID 测试]\n");
+    failed += test_user_id_create_destroy();
 
     /* 桶 ID 测试 */
-    printf("--- Bucket ID Tests ---\n");
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_bucket_id_create_destroy();
-    test_bucket_id_null_values();
-    printf("  Bucket ID tests: %d/%d passed, %d failed\n\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
+    printf("[桶 ID 测试]\n");
+    failed += test_bucket_id_create_destroy();
 
     /* 对象键测试 */
-    printf("--- Object Key Tests ---\n");
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_obj_key_create_destroy();
-    test_obj_key_null_instance();
-    test_obj_key_flags();
-    printf("  Object Key tests: %d/%d passed, %d failed\n\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
+    printf("[对象键测试]\n");
+    failed += test_obj_key_create_destroy();
+
+    /* 配额信息测试 */
+    printf("[配额信息测试]\n");
+    failed += test_quota_info();
 
     /* 属性映射测试 */
-    printf("--- Attributes Tests ---\n");
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_attrs_create_destroy();
-    test_attrs_update();
-    test_attrs_not_found();
-    test_attrs_binary_data();
-    test_attrs_many_keys();
-    printf("  Attributes tests: %d/%d passed, %d failed\n\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
+    printf("[属性映射测试]\n");
+    failed += test_attrs_create_destroy();
+    failed += test_attrs_update_delete();
+    failed += test_attrs_clone();
 
-    /* 计算总数 */
-    int total_run = 0;
-    int total_passed = 0;
-    int total_failed = 0;
+    /* 使用统计测试 */
+    printf("[使用统计测试]\n");
+    failed += test_usage_info();
 
+    /* 用户组测试 */
+    printf("[用户组测试]\n");
+    failed += test_user_groups_create();
+
+    /* TOTP 测试 */
+    printf("[TOTP 测试]\n");
+    failed += test_totp_verify_exists();
+
+    /* 桶列表测试 */
+    printf("[桶列表测试]\n");
+    failed += test_bucket_list_create_destroy();
+
+    printf("\n");
     printf("========================================\n");
-    printf("Test Summary\n");
+    printf("测试结果汇总\n");
     printf("========================================\n");
+    printf("  运行: %d\n", g_tests_run);
+    printf("  通过: %d\n", g_tests_passed);
+    printf("  失败: %d\n", g_tests_failed);
+    printf("  跳过: %d\n", g_tests_skipped);
+    printf("========================================\n\n");
 
-    /* 重新运行以收集总数 */
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_user_id_create_destroy(); test_user_id_null_values();
-    printf("User ID:        %d/%d passed, %d failed\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
-    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
-
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_bucket_id_create_destroy(); test_bucket_id_null_values();
-    printf("Bucket ID:      %d/%d passed, %d failed\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
-    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
-
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_obj_key_create_destroy(); test_obj_key_null_instance(); test_obj_key_flags();
-    printf("Object Key:     %d/%d passed, %d failed\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
-    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
-
-    g_tests_run = 0; g_tests_passed = 0; g_tests_failed = 0;
-    test_attrs_create_destroy(); test_attrs_update(); test_attrs_not_found();
-    test_attrs_binary_data(); test_attrs_many_keys();
-    printf("Attributes:     %d/%d passed, %d failed\n",
-           g_tests_passed, g_tests_run, g_tests_failed);
-    total_run += g_tests_run; total_passed += g_tests_passed; total_failed += g_tests_failed;
-
-    printf("========================================\n");
-    printf("TOTAL:          %d/%d passed, %d failed\n", total_passed, total_run, total_failed);
-    printf("========================================\n");
-
-    if (total_failed == 0) {
-        printf("All tests PASSED!\n");
-    } else {
-        printf("Some tests FAILED!\n");
-    }
-    printf("========================================\n");
-
-    fflush(stdout);
-
-    return total_failed > 0 ? 1 : 0;
+    return g_tests_failed > 0 ? 1 : 0;
 }

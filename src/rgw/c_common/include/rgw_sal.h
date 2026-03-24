@@ -67,6 +67,7 @@ typedef struct rgw_sal_bucket rgw_sal_bucket_t;
 typedef struct rgw_sal_object rgw_sal_object_t;
 typedef struct rgw_sal_attrs rgw_sal_attrs_t;
 typedef struct rgw_sal_bucket_list rgw_sal_bucket_list_t;
+typedef struct rgw_sal_object_list rgw_sal_object_list_t;
 
 /* VTable 类型前向声明 */
 typedef struct rgw_sal_driver_vtable rgw_sal_driver_vtable_t;
@@ -74,13 +75,17 @@ typedef struct rgw_sal_user_vtable rgw_sal_user_vtable_t;
 typedef struct rgw_sal_bucket_vtable rgw_sal_bucket_vtable_t;
 typedef struct rgw_sal_object_vtable rgw_sal_object_vtable_t;
 
-/* 用户 ID 结构 */
+/* 核心类型定义 (与 rgw_sal_types.h 保持一致) */
+
+/* 用户 ID 结构 (别名) */
 typedef struct rgw_user {
     char *tenant;
     char *id;
     char *swift_name;
     char *swift_subuser;
 } rgw_user_t;
+
+/* 注意: rgw_sal_bucket_id_t 在 rgw_sal_types.h 中定义 */
 
 /**
  * @brief 创建 rgw_user
@@ -186,6 +191,56 @@ size_t rgw_sal_bucket_list_size(const rgw_sal_bucket_list_t *list);
  * @brief 获取下一个 marker
  */
 const char *rgw_sal_bucket_list_next_marker(const rgw_sal_bucket_list_t *list);
+
+/**
+ * @brief 对象条目结构 (用于列表返回)
+ */
+typedef struct rgw_sal_object_entry {
+    char *key;           /**< 对象键 */
+    char *name;           /**< 对象名 */
+    char *instance;       /**< 版本 ID */
+    char *ns;             /**< 命名空间 */
+} rgw_sal_object_entry_t;
+
+/**
+ * @brief 桶条目结构 (用于列表返回)
+ */
+typedef struct rgw_sal_bucket_entry {
+    char *key;           /**< 桶键 */
+    char *name;           /**< 桶名 */
+    char *bucket;         /**< 桶信息 (内部实现) */
+} rgw_sal_bucket_entry_t;
+
+/**
+ * @brief 对象列表结果
+ */
+struct rgw_sal_object_list {
+    void *objects;        /**< 内部实现: 对象数组 */
+    char *next_marker;
+    bool truncated;
+    size_t count;         /**< 对象数量 */
+    bool is_truncated;    /**< 是否还有更多数据 */
+};
+
+/**
+ * @brief 创建对象列表
+ */
+rgw_sal_object_list_t *rgw_sal_object_list_create(void);
+
+/**
+ * @brief 释放对象列表
+ */
+void rgw_sal_object_list_destroy(rgw_sal_object_list_t *list);
+
+/**
+ * @brief 获取对象列表大小
+ */
+size_t rgw_sal_object_list_size(const rgw_sal_object_list_t *list);
+
+/**
+ * @brief 获取下一个 marker
+ */
+const char *rgw_sal_object_list_next_marker(const rgw_sal_object_list_t *list);
 
 /**
  * @brief 存储驱动操作接口

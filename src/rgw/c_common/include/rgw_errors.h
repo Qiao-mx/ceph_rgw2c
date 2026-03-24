@@ -48,6 +48,7 @@
 
 #pragma once
 
+#include <errno.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -73,7 +74,7 @@ typedef enum rgw_error_code {
     RGW_ERR_PARSE_ERROR = 12,         /**< Parse error */
     RGW_ERR_CONNECTION_FAILED = 13,   /**< Connection failed */
     RGW_ERR_PROTOCOL_ERROR = 14,      /**< Protocol error */
-    RGW_ERR_UNKNOWN = 255             /**< Unknown error */
+    RGW_UNKNOWN = 255             /**< Unknown error */
 } rgw_error_code_t;
 
 /**

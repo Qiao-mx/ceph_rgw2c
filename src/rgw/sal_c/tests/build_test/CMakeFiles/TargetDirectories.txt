@@ -1,0 +1,6 @@
+/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/build_test/CMakeFiles/test_basic.dir
+/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/build_test/CMakeFiles/test_rados_driver.dir
+/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/build_test/CMakeFiles/test_integration.dir
+/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/build_test/CMakeFiles/test_ceph_cluster.dir
+/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/build_test/CMakeFiles/edit_cache.dir
+/mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/tests/build_test/CMakeFiles/rebuild_cache.dir

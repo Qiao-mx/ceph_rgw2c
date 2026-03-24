@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_oop.dir/tests/test_oop.c.o -o test_oop  librgw_c_common.a 

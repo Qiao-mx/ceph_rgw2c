@@ -1,0 +1,1 @@
+/usr/bin/cc -g CMakeFiles/test_basic.dir/test_basic.c.o -o test_basic  /mnt/d/NAS/ceph-20.1.1/src/rgw/sal_c/../c_common/build/librgw_c_common.a -lm 

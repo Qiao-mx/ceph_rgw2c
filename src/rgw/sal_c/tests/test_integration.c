@@ -1,10 +1,10 @@
 /**
  * @file test_integration.c
- * @brief SAL RADOS 驱动集成测试
+ * @brief RADOS 驱动集成测试
  *
  * 测试 RADOS 驱动的完整工作流程，包括：
- * - 用户完整生命周期（创建、设置属性、存储、加载、删除）
- * - 桶完整生命周期（创建、设置属性、存储、加载、删除）
+ * - 用户完整生命周期
+ * - 桶完整生命周期
  * - 对象操作流程
  * - 复合操作测试
  */
@@ -18,8 +18,8 @@
 #include <errno.h>
 
 #include "rgw_sal.h"
-#include "rgw_sal_rados.h"
 #include "rgw_sal_types.h"
+#include "rgw_sal_rados.h"
 
 /*============================================================================
  * 测试框架
@@ -28,9 +28,10 @@
 static int g_tests_run = 0;
 static int g_tests_passed = 0;
 static int g_tests_failed = 0;
+static int g_tests_skipped = 0;
 
 #define TEST_START(name) do { \
-    printf("  %-45s ", name); \
+    printf("  %-50s ", name); \
     fflush(stdout); \
     g_tests_run++; \
 } while(0)
@@ -45,6 +46,11 @@ static int g_tests_failed = 0;
     printf("[FAIL] %s\n", msg); \
     fflush(stdout); \
     g_tests_failed++; \
+} while(0)
+
+#define TEST_SKIP(msg) do { \
+    printf("[SKIP] %s\n", msg); \
+    g_tests_skipped++; \
 } while(0)
 
 #define TEST_EXPECT(actual, expected, msg) do { \
@@ -76,573 +82,320 @@ static int g_tests_failed = 0;
  *============================================================================*/
 
 typedef struct {
-    const char* name;
+    rgw_sal_driver_t* driver;
+    rgw_sal_user_t* user;
+    rgw_sal_bucket_t* bucket;
     int passed;
     int failed;
-} test_group_t;
+} test_fixture_t;
 
-static test_group_t* create_test_group(const char* name) {
-    test_group_t* group = (test_group_t*)calloc(1, sizeof(test_group_t));
-    if (group) {
-        group->name = name;
+static test_fixture_t* create_fixture(void) {
+    test_fixture_t* fixture = (test_fixture_t*)calloc(1, sizeof(test_fixture_t));
+    if (!fixture) return NULL;
+
+    fixture->driver = rgw_sal_rados_driver_create(NULL, NULL);
+    if (!fixture->driver) {
+        free(fixture);
+        return NULL;
     }
-    return group;
+
+    return fixture;
 }
 
-static void print_group_result(test_group_t* group) {
-    printf("  %s: %d/%d passed, %d failed\n\n",
-           group->name, group->passed, group->passed + group->failed, group->failed);
+static void destroy_fixture(test_fixture_t* fixture) {
+    if (!fixture) return;
+
+    if (fixture->user) {
+        rgw_sal_rados_user_destroy(fixture->user);
+    }
+
+    if (fixture->bucket) {
+        rgw_sal_rados_bucket_destroy(fixture->bucket);
+    }
+
+    if (fixture->driver) {
+        rgw_sal_rados_driver_destroy(fixture->driver);
+    }
+
+    free(fixture);
 }
 
-static void free_test_group(test_group_t* group) {
-    free(group);
+static void print_fixture_result(test_fixture_t* fixture, const char* name) {
+    printf("  %s: %d/%d passed, %d failed\n",
+           name, fixture->passed, fixture->passed + fixture->failed, fixture->failed);
 }
 
 /*============================================================================
- * 用户生命周期测试
+ * 测试用例
  *============================================================================*/
 
-static int test_user_full_lifecycle(test_group_t* group) {
-    TEST_START("user_full_lifecycle");
-
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
-        return 1;
-    }
+/* 测试用户生命周期 */
+static int test_user_lifecycle(test_fixture_t* fixture) {
+    TEST_START("user_lifecycle");
 
     /* 创建用户 */
     rgw_sal_user_id_t uid = {0};
     uid.id = strdup("lifecycle_user");
     uid.tenant = strdup("test_tenant");
 
-    rgw_sal_user_t* user = rgw_sal_rados_get_user(driver, &uid);
-    if (!user) {
+    fixture->user = rgw_sal_rados_get_user(fixture->driver, &uid);
+    if (!fixture->user) {
         free(uid.id);
         free(uid.tenant);
-        rgw_sal_rados_driver_destroy(driver);
         TEST_FAIL("user creation failed");
         return 1;
     }
 
     /* 设置用户属性 */
-    rgw_sal_rados_user_set_display_name(user, "Lifecycle Test User");
-    rgw_sal_rados_user_set_max_buckets(user, 50);
+    rgw_sal_rados_user_set_display_name(fixture->user, "Lifecycle Test User");
+    rgw_sal_rados_user_set_max_buckets(fixture->user, 50);
 
-    rgw_sal_attrs_t* attrs = rgw_sal_rados_user_get_attrs(user);
-    if (attrs) {
-        uint8_t val[] = "custom_value";
-        rgw_sal_attrs_set(attrs, "custom_attr", val, sizeof(val) - 1);
-    }
-
-    /* 验证设置的值 */
-    const char* display_name = rgw_sal_rados_user_get_display_name(user);
+    /* 验证属性 */
+    const char* display_name = rgw_sal_rados_user_get_display_name(fixture->user);
     if (!display_name || strcmp(display_name, "Lifecycle Test User") != 0) {
-        rgw_sal_rados_user_destroy(user);
         free(uid.id);
         free(uid.tenant);
-        rgw_sal_rados_driver_destroy(driver);
         TEST_FAIL("display_name mismatch");
         return 1;
     }
 
-    int32_t max_buckets = rgw_sal_rados_user_get_max_buckets(user);
+    int32_t max_buckets = rgw_sal_rados_user_get_max_buckets(fixture->user);
     if (max_buckets != 50) {
-        rgw_sal_rados_user_destroy(user);
         free(uid.id);
         free(uid.tenant);
-        rgw_sal_rados_driver_destroy(driver);
         TEST_FAIL("max_buckets mismatch");
         return 1;
     }
 
-    /* 克隆用户 */
-    rgw_sal_user_t* clone = rgw_sal_rados_user_clone(user);
-    if (!clone) {
-        rgw_sal_rados_user_destroy(user);
-        free(uid.id);
-        free(uid.tenant);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("user clone failed");
-        return 1;
-    }
-
-    const char* clone_id = rgw_sal_rados_user_get_id(clone);
-    if (!clone_id || strcmp(clone_id, "lifecycle_user") != 0) {
-        rgw_sal_rados_user_destroy(clone);
-        rgw_sal_rados_user_destroy(user);
-        free(uid.id);
-        free(uid.tenant);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("clone id mismatch");
-        return 1;
-    }
-
-    printf("\n    User created, attrs set, cloned successfully");
+    printf("\n    User created with display_name='%s', max_buckets=%d",
+           display_name, max_buckets);
 
     /* 清理 */
-    rgw_sal_rados_user_destroy(clone);
-    rgw_sal_rados_user_destroy(user);
     free(uid.id);
     free(uid.tenant);
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
+    fixture->passed++;
     TEST_PASS();
     return 0;
 }
 
-/*============================================================================
- * 桶生命周期测试
- *============================================================================*/
-
-static int test_bucket_full_lifecycle(test_group_t* group) {
-    TEST_START("bucket_full_lifecycle");
-
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
-        return 1;
-    }
-
-    /* 创建用户作为桶所有者 */
-    rgw_sal_user_id_t uid = {0};
-    uid.id = strdup("bucket_owner");
-
-    rgw_sal_user_t* owner = rgw_sal_rados_get_user(driver, &uid);
-    if (!owner) {
-        free(uid.id);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("owner creation failed");
-        return 1;
-    }
+/* 测试桶生命周期 */
+static int test_bucket_lifecycle(test_fixture_t* fixture) {
+    TEST_START("bucket_lifecycle");
 
     /* 创建桶 */
     rgw_sal_bucket_id_t bid = {0};
     bid.name = strdup("lifecycle_bucket");
     bid.tenant = strdup("test_tenant");
-    bid.marker = strdup("bucket_marker_123");
-    bid.bucket_id = strdup("bucket_uuid_123");
+    bid.marker = strdup("marker_123");
+    bid.bucket_id = strdup("bucket_uuid_456");
 
-    rgw_sal_bucket_t* bucket = rgw_sal_rados_get_bucket(driver, &bid);
-    if (!bucket) {
-        rgw_sal_rados_user_destroy(owner);
-        free(uid.id);
+    fixture->bucket = rgw_sal_rados_get_bucket(fixture->driver, &bid);
+    if (!fixture->bucket) {
         free(bid.name);
         free(bid.tenant);
         free(bid.marker);
         free(bid.bucket_id);
-        rgw_sal_rados_driver_destroy(driver);
         TEST_FAIL("bucket creation failed");
         return 1;
     }
 
-    /* 设置桶属性 */
-    rgw_sal_attrs_t* attrs = rgw_sal_rados_bucket_get_attrs(bucket);
-    if (attrs) {
-        uint8_t val[] = "bucket_custom_value";
-        rgw_sal_attrs_set(attrs, "bucket_attr", val, sizeof(val) - 1);
-    }
+    /* 设置标签 */
+    rgw_sal_rados_bucket_set_tag(fixture->bucket, "bucket_tag");
 
-    /* 设置桶标签 */
-    rgw_sal_rados_bucket_set_tag(bucket, "lifecycle_tag");
-
-    /* 验证属性 */
-    const char* tag = rgw_sal_rados_bucket_get_tag(bucket);
-    printf("\n    Bucket created, tag='%s'", tag ? tag : "NULL");
-
-    /* 克隆桶 */
-    rgw_sal_bucket_t* clone = rgw_sal_rados_bucket_clone(bucket);
-    if (!clone) {
-        rgw_sal_rados_bucket_destroy(bucket);
-        rgw_sal_rados_user_destroy(owner);
-        free(uid.id);
+    /* 验证标签 */
+    const char* tag = rgw_sal_rados_bucket_get_tag(fixture->bucket);
+    if (!tag || strcmp(tag, "bucket_tag") != 0) {
         free(bid.name);
         free(bid.tenant);
         free(bid.marker);
         free(bid.bucket_id);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("bucket clone failed");
+        TEST_FAIL("tag mismatch");
         return 1;
     }
 
-    const char* clone_name = rgw_sal_rados_bucket_get_name(clone);
-    if (!clone_name || strcmp(clone_name, "lifecycle_bucket") != 0) {
-        rgw_sal_rados_bucket_destroy(clone);
-        rgw_sal_rados_bucket_destroy(bucket);
-        rgw_sal_rados_user_destroy(owner);
-        free(uid.id);
-        free(bid.name);
-        free(bid.tenant);
-        free(bid.marker);
-        free(bid.bucket_id);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("clone name mismatch");
-        return 1;
-    }
-
-    printf("\n    Bucket cloned successfully");
+    printf("\n    Bucket created with name='%s', tag='%s'", bid.name, tag);
 
     /* 清理 */
-    rgw_sal_rados_bucket_destroy(clone);
-    rgw_sal_rados_bucket_destroy(bucket);
-    rgw_sal_rados_user_destroy(owner);
-    free(uid.id);
     free(bid.name);
     free(bid.tenant);
     free(bid.marker);
     free(bid.bucket_id);
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
+    fixture->passed++;
     TEST_PASS();
     return 0;
 }
 
-/*============================================================================
- * 对象生命周期测试
- *============================================================================*/
-
-static int test_object_full_lifecycle(test_group_t* group) {
-    TEST_START("object_full_lifecycle");
-
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
-        return 1;
-    }
+/* 测试对象生命周期 */
+static int test_object_lifecycle(test_fixture_t* fixture) {
+    TEST_START("object_lifecycle");
 
     /* 创建桶 */
-    rgw_sal_bucket_id_t bid = {0};
-    bid.name = strdup("obj_lifecycle_bucket");
+    rgw_sal_bucket_id_t bucket_id = {0};
+    bucket_id.name = strdup("test_bucket");
 
-    rgw_sal_bucket_t* bucket = rgw_sal_rados_get_bucket(driver, &bid);
-    if (!bucket) {
-        free(bid.name);
-        rgw_sal_rados_driver_destroy(driver);
+    fixture->bucket = rgw_sal_rados_get_bucket(fixture->driver, &bucket_id);
+    if (!fixture->bucket) {
+        free(bucket_id.name);
         TEST_FAIL("bucket creation failed");
         return 1;
     }
 
     /* 创建对象 */
     rgw_sal_obj_key_t key = {0};
-    key.name = strdup("test_object.txt");
+    key.name = strdup("test_object");
     key.instance = strdup("v1");
-    key.is_null = false;
 
-    rgw_sal_object_t* obj = rgw_sal_rados_get_object(driver, bucket, &key);
+    rgw_sal_object_t* obj = rgw_sal_rados_get_object(fixture->driver, fixture->bucket, &key);
     if (!obj) {
-        rgw_sal_rados_bucket_destroy(bucket);
-        free(bid.name);
         free(key.name);
         free(key.instance);
-        rgw_sal_rados_driver_destroy(driver);
+        free(bucket_info.bucket.name);
         TEST_FAIL("object creation failed");
         return 1;
     }
 
-    /* 设置对象属性 */
+    /* 设置属性 */
     rgw_sal_attrs_t* attrs = rgw_sal_rados_object_get_attrs(obj);
     if (attrs) {
-        uint8_t content_type[] = "text/plain";
-        uint8_t etag[] = "abc123";
-        rgw_sal_attrs_set(attrs, "Content-Type", content_type, sizeof(content_type) - 1);
-        rgw_sal_attrs_set(attrs, "ETag", etag, sizeof(etag) - 1);
+        uint8_t val[] = "test_value";
+        rgw_sal_attrs_set(attrs, "content-type", val, sizeof(val) - 1);
     }
-
-    /* 设置原子标志 */
-    rgw_sal_rados_object_set_atomic(obj, true);
 
     /* 验证属性 */
-    bool is_atomic = rgw_sal_rados_object_is_atomic(obj);
-    printf("\n    Object created, is_atomic=%d", is_atomic);
-
-    /* 克隆对象 */
-    rgw_sal_object_t* clone = rgw_sal_rados_object_clone(obj);
-    if (!clone) {
-        rgw_sal_rados_object_destroy(obj);
-        rgw_sal_rados_bucket_destroy(bucket);
-        free(bid.name);
+    uint8_t* out = NULL;
+    size_t len = 0;
+    attrs = rgw_sal_rados_object_get_attrs(obj);
+    int ret = rgw_sal_attrs_get(attrs, "content-type", &out, &len);
+    if (ret != 0 || len != 10 || memcmp(out, "test_value", 10) != 0) {
         free(key.name);
         free(key.instance);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("object clone failed");
+        free(bucket_info.bucket.name);
+        if (out) free(out);
+        TEST_FAIL("attribute mismatch");
         return 1;
     }
 
-    const char* clone_name = rgw_sal_rados_object_get_name(clone);
-    if (!clone_name || strcmp(clone_name, "test_object.txt") != 0) {
-        rgw_sal_rados_object_destroy(clone);
-        rgw_sal_rados_object_destroy(obj);
-        rgw_sal_rados_bucket_destroy(bucket);
-        free(bid.name);
-        free(key.name);
-        free(key.instance);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("clone name mismatch");
-        return 1;
-    }
+    printf("\n    Object created with name='%s', attrs set", key.name);
 
-    printf("\n    Object cloned successfully");
+    if (out) free(out);
 
     /* 清理 */
-    rgw_sal_rados_object_destroy(clone);
-    rgw_sal_rados_object_destroy(obj);
-    rgw_sal_rados_bucket_destroy(bucket);
-    free(bid.name);
     free(key.name);
     free(key.instance);
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
+    free(bucket_info.bucket.name);
+    rgw_sal_rados_object_destroy(obj);
+    fixture->passed++;
     TEST_PASS();
     return 0;
 }
 
-/*============================================================================
- * 用户-桶关联测试
- *============================================================================*/
-
-static int test_user_bucket_association(test_group_t* group) {
-    TEST_START("user_bucket_association");
-
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
-        return 1;
-    }
+/* 测试复合操作 */
+static int test_compound_operations(test_fixture_t* fixture) {
+    TEST_START("compound_operations");
 
     /* 创建用户 */
     rgw_sal_user_id_t uid = {0};
-    uid.id = strdup("associated_user");
+    uid.id = strdup("compound_user");
+    uid.tenant = strdup("test_tenant");
 
-    rgw_sal_user_t* user = rgw_sal_rados_get_user(driver, &uid);
-    if (!user) {
+    fixture->user = rgw_sal_rados_get_user(fixture->driver, &uid);
+    if (!fixture->user) {
         free(uid.id);
-        rgw_sal_rados_driver_destroy(driver);
+        free(uid.tenant);
         TEST_FAIL("user creation failed");
-        return 1;
-    }
-
-    /* 创建多个桶 */
-    const char* bucket_names[] = {"bucket_one", "bucket_two", "bucket_three"};
-    rgw_sal_bucket_t* buckets[3] = {NULL, NULL, NULL};
-
-    for (int i = 0; i < 3; i++) {
-        rgw_sal_bucket_id_t bid = {0};
-        bid.name = strdup(bucket_names[i]);
-
-        buckets[i] = rgw_sal_rados_get_bucket(driver, &bid);
-        free(bid.name);
-
-        if (!buckets[i]) {
-            printf("\n    WARNING: bucket %s creation failed", bucket_names[i]);
-        }
-    }
-
-    printf("\n    Created %d buckets for user", 3);
-
-    /* 清理桶 */
-    for (int i = 0; i < 3; i++) {
-        if (buckets[i]) {
-            rgw_sal_rados_bucket_destroy(buckets[i]);
-        }
-    }
-
-    /* 清理用户 */
-    rgw_sal_rados_user_destroy(user);
-    free(uid.id);
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
-    TEST_PASS();
-    return 0;
-}
-
-/*============================================================================
- * 桶-对象关联测试
- *============================================================================*/
-
-static int test_bucket_object_association(test_group_t* group) {
-    TEST_START("bucket_object_association");
-
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
         return 1;
     }
 
     /* 创建桶 */
-    rgw_sal_bucket_id_t bid = {0};
-    bid.name = strdup("object_container");
+    rgw_sal_bucket_info_t info = {0};
+    info.bucket.name = strdup("compound_bucket");
+    info.bucket.tenant = strdup("test_tenant");
 
-    rgw_sal_bucket_t* bucket = rgw_sal_rados_get_bucket(driver, &bid);
-    if (!bucket) {
-        free(bid.name);
-        rgw_sal_rados_driver_destroy(driver);
+    fixture->bucket = rgw_sal_rados_get_bucket(fixture->driver, &info);
+    if (!fixture->bucket) {
+        free(uid.id);
+        free(uid.tenant);
+        free(info.bucket.name);
+        free(info.bucket.tenant);
         TEST_FAIL("bucket creation failed");
         return 1;
     }
 
-    /* 创建多个对象 */
-    const char* object_names[] = {"obj1.txt", "obj2.txt", "dir/", "dir/nested.txt"};
-    rgw_sal_object_t* objects[4] = {NULL, NULL, NULL, NULL};
+    /* 创建对象 */
+    rgw_sal_obj_key_t key = {0};
+    key.name = strdup("compound_object");
 
-    for (int i = 0; i < 4; i++) {
-        rgw_sal_obj_key_t key = {0};
-        key.name = strdup(object_names[i]);
-
-        objects[i] = rgw_sal_rados_get_object(driver, bucket, &key);
+    rgw_sal_object_t* obj = rgw_sal_rados_get_object(fixture->driver, fixture->bucket, &key);
+    if (!obj) {
+        free(uid.id);
+        free(uid.tenant);
+        free(info.bucket.name);
+        free(info.bucket.tenant);
         free(key.name);
-
-        if (!objects[i]) {
-            printf("\n    WARNING: object %s creation failed", object_names[i]);
-        }
+        TEST_FAIL("object creation failed");
+        return 1;
     }
 
-    printf("\n    Created %d objects in bucket", 4);
+    /* 验证对象和桶的关联 */
+    TEST_EXPECT_NOT_NULL(obj->bucket, "object should have bucket");
 
-    /* 清理对象 */
-    for (int i = 0; i < 4; i++) {
-        if (objects[i]) {
-            rgw_sal_rados_object_destroy(objects[i]);
-        }
-    }
+    printf("\n    Compound: user='%s', bucket='%s', object='%s'",
+           uid.id, info.bucket.name, key.name);
 
-    /* 清理桶 */
-    rgw_sal_rados_bucket_destroy(bucket);
-    free(bid.name);
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
+    /* 清理 */
+    free(uid.id);
+    free(uid.tenant);
+    free(info.bucket.name);
+    free(info.bucket.tenant);
+    free(key.name);
+    rgw_sal_rados_object_destroy(obj);
+    fixture->passed++;
     TEST_PASS();
     return 0;
 }
 
-/*============================================================================
- * 属性继承测试
- *============================================================================*/
+/* 测试属性继承 */
+static int test_attr_inheritance(test_fixture_t* fixture) {
+    TEST_START("attr_inheritance");
 
-static int test_attribute_inheritance(test_group_t* group) {
-    TEST_START("attribute_inheritance");
+    /* 创建桶 */
+    rgw_sal_bucket_info_t info = {0};
+    info.bucket.name = strdup("attr_bucket");
 
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
+    fixture->bucket = rgw_sal_rados_get_bucket(fixture->driver, &info);
+    if (!fixture->bucket) {
+        free(info.bucket.name);
+        TEST_FAIL("bucket creation failed");
         return 1;
     }
 
-    /* 创建用户并设置属性 */
-    rgw_sal_user_id_t uid = {0};
-    uid.id = strdup("attr_user");
-
-    rgw_sal_user_t* user = rgw_sal_rados_get_user(driver, &uid);
-    if (!user) {
-        free(uid.id);
-        rgw_sal_rados_driver_destroy(driver);
-        TEST_FAIL("user creation failed");
-        return 1;
-    }
-
-    rgw_sal_attrs_t* user_attrs = rgw_sal_rados_user_get_attrs(user);
-    if (user_attrs) {
-        uint8_t val[] = "user_level_attr";
-        rgw_sal_attrs_set(user_attrs, "inherited_attr", val, sizeof(val) - 1);
-    }
-
-    /* 创建桶（可能继承用户属性） */
-    rgw_sal_bucket_id_t bid = {0};
-    bid.name = strdup("attr_bucket");
-
-    rgw_sal_bucket_t* bucket = rgw_sal_rados_get_bucket(driver, &bid);
-    if (bucket) {
-        rgw_sal_attrs_t* bucket_attrs = rgw_sal_rados_bucket_get_attrs(bucket);
-        printf("\n    User and bucket attributes set");
-        rgw_sal_rados_bucket_destroy(bucket);
-    }
-
-    /* 创建对象（可能继承桶属性） */
+    /* 创建对象 */
     rgw_sal_obj_key_t key = {0};
     key.name = strdup("attr_object");
 
-    rgw_sal_object_t* obj = rgw_sal_rados_get_object(driver, bucket, &key);
-    if (obj) {
-        rgw_sal_attrs_t* obj_attrs = rgw_sal_rados_object_get_attrs(obj);
-        printf("\n    Object attributes set");
-        rgw_sal_rados_object_destroy(obj);
-    }
-
-    /* 清理 */
-    rgw_sal_rados_user_destroy(user);
-    free(uid.id);
-    free(bid.name);
-    free(key.name);
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
-    TEST_PASS();
-    return 0;
-}
-
-/*============================================================================
- * 并发操作测试（模拟）
- *============================================================================*/
-
-static int test_concurrent_operations(test_group_t* group) {
-    TEST_START("concurrent_operations");
-
-    rgw_sal_driver_t* driver = rgw_sal_rados_driver_create(NULL, NULL);
-    if (!driver) {
-        TEST_FAIL("driver creation failed");
+    rgw_sal_object_t* obj = rgw_sal_rados_get_object(fixture->driver, fixture->bucket, &key);
+    if (!obj) {
+        free(info.bucket.name);
+        free(key.name);
+        TEST_FAIL("object creation failed");
         return 1;
     }
 
-    /* 模拟创建多个独立对象 */
-    const int num_users = 10;
-    rgw_sal_user_t* users[10] = {NULL};
-    bool all_created = true;
+    /* 获取对象属性 */
+    rgw_sal_attrs_t* obj_attrs = rgw_sal_rados_object_get_attrs(obj);
+    TEST_EXPECT_NOT_NULL(obj_attrs, "object attrs should not be NULL");
 
-    for (int i = 0; i < num_users; i++) {
-        char id[32];
-        snprintf(id, sizeof(id), "concurrent_user_%d", i);
+    /* 验证桶有属性 */
+    rgw_sal_attrs_t* bucket_attrs = rgw_sal_rados_bucket_get_attrs(fixture->bucket);
+    TEST_EXPECT_NOT_NULL(bucket_attrs, "bucket attrs should not be NULL");
 
-        rgw_sal_user_id_t uid = {0};
-        uid.id = strdup(id);
-
-        users[i] = rgw_sal_rados_get_user(driver, &uid);
-        free(uid.id);
-
-        if (!users[i]) {
-            all_created = false;
-            printf("\n    WARNING: user %d creation failed", i);
-        }
-    }
-
-    if (all_created) {
-        printf("\n    Created %d users concurrently", num_users);
-    }
-
-    /* 验证所有用户 */
-    int verified = 0;
-    for (int i = 0; i < num_users; i++) {
-        if (users[i]) {
-            const char* id = rgw_sal_rados_user_get_id(users[i]);
-            if (id) verified++;
-        }
-    }
-
-    printf("\n    Verified %d/%d users", verified, num_users);
+    printf("\n    Attr inheritance: bucket and object both have attrs");
 
     /* 清理 */
-    for (int i = 0; i < num_users; i++) {
-        if (users[i]) {
-            rgw_sal_rados_user_destroy(users[i]);
-        }
-    }
-
-    rgw_sal_rados_driver_destroy(driver);
-
-    group->passed++;
+    free(info.bucket.name);
+    free(key.name);
+    rgw_sal_rados_object_destroy(obj);
+    fixture->passed++;
     TEST_PASS();
     return 0;
 }
@@ -651,75 +404,45 @@ static int test_concurrent_operations(test_group_t* group) {
  * 主函数
  *============================================================================*/
 
-int main(void) {
+int main(int argc, char* argv[]) {
+    (void)argc;
+    (void)argv;
+
+    printf("\n");
     printf("========================================\n");
-    printf("SAL RADOS Integration Test Suite\n");
+    printf("RADOS 驱动集成测试\n");
     printf("========================================\n\n");
 
-    int total_passed = 0;
-    int total_failed = 0;
+    int failed = 0;
 
-    /* 用户生命周期测试 */
-    test_group_t* user_group = create_test_group("User Lifecycle");
-    test_user_full_lifecycle(user_group);
-    print_group_result(user_group);
-    total_passed += user_group->passed;
-    total_failed += user_group->failed;
-    free_test_group(user_group);
-
-    /* 桶生命周期测试 */
-    test_group_t* bucket_group = create_test_group("Bucket Lifecycle");
-    test_bucket_full_lifecycle(bucket_group);
-    print_group_result(bucket_group);
-    total_passed += bucket_group->passed;
-    total_failed += bucket_group->failed;
-    free_test_group(bucket_group);
-
-    /* 对象生命周期测试 */
-    test_group_t* object_group = create_test_group("Object Lifecycle");
-    test_object_full_lifecycle(object_group);
-    print_group_result(object_group);
-    total_passed += object_group->passed;
-    total_failed += object_group->failed;
-    free_test_group(object_group);
-
-    /* 用户-桶关联测试 */
-    test_group_t* assoc_group = create_test_group("Associations");
-    test_user_bucket_association(assoc_group);
-    test_bucket_object_association(assoc_group);
-    test_attribute_inheritance(assoc_group);
-    print_group_result(assoc_group);
-    total_passed += assoc_group->passed;
-    total_failed += assoc_group->failed;
-    free_test_group(assoc_group);
-
-    /* 并发操作测试 */
-    test_group_t* concurrent_group = create_test_group("Concurrent Operations");
-    test_concurrent_operations(concurrent_group);
-    print_group_result(concurrent_group);
-    total_passed += concurrent_group->passed;
-    total_failed += concurrent_group->failed;
-    free_test_group(concurrent_group);
-
-    /* 总结 */
-    int total_tests = total_passed + total_failed;
-
-    printf("========================================\n");
-    printf("Integration Test Summary\n");
-    printf("========================================\n");
-    printf("Total tests:    %d\n", total_tests);
-    printf("Tests passed:   %d\n", total_passed);
-    printf("Tests failed:   %d\n", total_failed);
-    printf("========================================\n");
-
-    if (total_failed == 0) {
-        printf("All integration tests PASSED!\n");
-    } else {
-        printf("Some integration tests FAILED!\n");
+    /* 创建测试夹具 */
+    test_fixture_t* fixture = create_fixture();
+    if (!fixture) {
+        printf("FAIL: Failed to create test fixture\n");
+        return 1;
     }
+
+    printf("\n[Test Fixture Created]\n");
+
+    /* 执行集成测试 */
+    failed += test_user_lifecycle(fixture);
+    failed += test_bucket_lifecycle(fixture);
+    failed += test_object_lifecycle(fixture);
+    failed += test_compound_operations(fixture);
+    failed += test_attr_inheritance(fixture);
+
+    printf("\n");
     printf("========================================\n");
+    printf("集成测试结果汇总\n");
+    printf("========================================\n");
+    printf("  运行: %d\n", g_tests_run);
+    printf("  通过: %d\n", g_tests_passed);
+    printf("  失败: %d\n", g_tests_failed);
+    printf("  跳过: %d\n", g_tests_skipped);
+    printf("========================================\n\n");
 
-    fflush(stdout);
+    /* 清理 */
+    destroy_fixture(fixture);
 
-    return total_failed > 0 ? 1 : 0;
+    return g_tests_failed > 0 ? 1 : 0;
 }

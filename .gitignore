@@ -80,6 +80,14 @@ GTAGS
 # mypy cache
 .mypy_cache/
 
+# RGW SAL C build directories
+src/rgw/c_common/build/
+src/rgw/c_common/build_*/
+src/rgw/sal_c/build/
+src/rgw/sal_c/build_*/
+src/rgw/sal_c/tests/build/
+src/rgw/sal_c/tests/build_*/
+
 # Python building things where it shouldn't
 /src/python-common/build/
 .cache

@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_xml.dir/tests/test_rgw_xml.c.o -o test_xml  librgw_c_common.a 

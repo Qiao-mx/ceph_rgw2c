@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -fPIC -g -O0 -DDEBUG CMakeFiles/test_comprehensive.dir/tests/test_comprehensive.c.o -o test_comprehensive  librgw_c_common.a 

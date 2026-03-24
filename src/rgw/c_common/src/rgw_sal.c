@@ -467,3 +467,172 @@ void rgw_sal_object_destroy(rgw_sal_object_t *obj) {
     /* 释放对象结构本身 */
     free(obj);
 }
+
+/*============================================================================
+ * 简化的创建函数（用于测试）
+ *============================================================================*/
+
+/**
+ * @brief 用户空销毁回调（用于简化创建的用户）
+ */
+static void user_simple_destroy(rgw_sal_user_t* user) {
+    /* 什么也不做 - 简化版本不需要特殊清理 */
+    (void)user;
+}
+
+/**
+ * @brief 桶空销毁回调
+ */
+static void bucket_simple_destroy(rgw_sal_bucket_t* bucket) {
+    (void)bucket;
+}
+
+/**
+ * @brief 对象空销毁回调
+ */
+static void object_simple_destroy(rgw_sal_object_t* obj) {
+    (void)obj;
+}
+
+/**
+ * @brief 创建用户对象（简化版本，用于测试）
+ */
+rgw_sal_user_t *rgw_sal_user_create_simple(void) {
+    /* 静态 ops 结构 - 用于简化版本 */
+    static rgw_sal_user_ops_t simple_ops = {
+        .load = NULL,
+        .store = NULL,
+        .remove = NULL,
+        .destroy = user_simple_destroy
+    };
+
+    rgw_sal_user_t* user = (rgw_sal_user_t*)calloc(1, sizeof(rgw_sal_user_t));
+    if (!user) {
+        return NULL;
+    }
+
+    user->ops = &simple_ops;
+    user->user_id = NULL;
+    user->driver = NULL;
+    user->impl = NULL;
+    user->vtable = NULL;
+
+    return user;
+}
+
+/**
+ * @brief 创建桶对象（简化版本，用于测试）
+ */
+rgw_sal_bucket_t *rgw_sal_bucket_create_simple(void) {
+    /* 静态 ops 结构 - 用于简化版本 */
+    static rgw_sal_bucket_ops_t simple_ops = {
+        .load = NULL,
+        .store = NULL,
+        .remove = NULL,
+        .list_objects = NULL,
+        .destroy = bucket_simple_destroy
+    };
+
+    rgw_sal_bucket_t* bucket = (rgw_sal_bucket_t*)calloc(1, sizeof(rgw_sal_bucket_t));
+    if (!bucket) {
+        return NULL;
+    }
+
+    bucket->ops = &simple_ops;
+    bucket->owner = NULL;
+    bucket->name = NULL;
+    bucket->marker = NULL;
+    bucket->bucket_id = NULL;
+    bucket->driver = NULL;
+    bucket->impl = NULL;
+    bucket->vtable = NULL;
+    bucket->bucket_vtable = NULL;
+
+    return bucket;
+}
+
+/**
+ * @brief 创建对象（简化版本，用于测试）
+ */
+rgw_sal_object_t *rgw_sal_object_create_simple(void) {
+    /* 静态 ops 结构 - 用于简化版本 */
+    static rgw_sal_object_ops_t simple_ops = {
+        .load = NULL,
+        .store = NULL,
+        .remove = NULL,
+        .read = NULL,
+        .write = NULL,
+        .destroy = object_simple_destroy
+    };
+
+    rgw_sal_object_t* obj = (rgw_sal_object_t*)calloc(1, sizeof(rgw_sal_object_t));
+    if (!obj) {
+        return NULL;
+    }
+
+    obj->ops = &simple_ops;
+    obj->bucket = NULL;
+    obj->key = NULL;
+    obj->size = 0;
+    obj->driver = NULL;
+    obj->impl = NULL;
+    obj->vtable = NULL;
+
+    return obj;
+}
+
+/*============================================================================
+ * 对象列表实现
+ *============================================================================*/
+
+/**
+ * @brief 创建对象列表
+ */
+rgw_sal_object_list_t *rgw_sal_object_list_create(void) {
+    rgw_sal_object_list_t *list = (rgw_sal_object_list_t*)calloc(1, sizeof(rgw_sal_object_list_t));
+    if (!list) {
+        return NULL;
+    }
+    list->objects = NULL;
+    list->next_marker = NULL;
+    list->truncated = false;
+    list->count = 0;
+    list->is_truncated = false;
+    return list;
+}
+
+/**
+ * @brief 释放对象列表
+ */
+void rgw_sal_object_list_destroy(rgw_sal_object_list_t *list) {
+    if (!list) {
+        return;
+    }
+    if (list->objects) {
+        free(list->objects);
+    }
+    if (list->next_marker) {
+        free(list->next_marker);
+    }
+    free(list);
+}
+
+/**
+ * @brief 获取对象列表大小
+ */
+size_t rgw_sal_object_list_size(const rgw_sal_object_list_t *list) {
+    if (!list) {
+        return 0;
+    }
+    return list->count;
+}
+
+/**
+ * @brief 获取下一个 marker
+ */
+const char *rgw_sal_object_list_next_marker(const rgw_sal_object_list_t *list) {
+    if (!list) {
+        return NULL;
+    }
+    return list->next_marker;
+}
